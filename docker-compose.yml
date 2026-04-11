@@ -140,7 +140,7 @@ services:
     working_dir: /package
     command: >
       sh -c "
-        npx --yes @socketsecurity/cli@latest scan . 2>&1 | tee /evidence/socket.txt;
+        npx --yes @socketsecurity/cli@latest scan create --no-interactive --json . 2>&1 | tee /evidence/socket.txt;
         echo 'socket: done'
       "
     profiles:

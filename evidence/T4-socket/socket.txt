@@ -1,0 +1,25 @@
+⚠ Note: This command requires an org slug because the Socket API endpoint does.
+⚠ 
+⚠ It seems no default org was setup and the `--org` flag was not used.
+⚠ Additionally, `--no-interactive` was set so we can't ask for it.
+⚠ Since v1.0.0 the org _argument_ for all commands was dropped in favor of an
+⚠ implicit default org setting, which will be setup when you run `socket login`.
+⚠ 
+⚠ Note: When running in CI, you probably want to set the `--org` flag.
+⚠ 
+⚠ For details, see the v1 migration guide (​https://docs.socket.dev/docs/v1-migration-guide​)
+⚠ 
+⚠ This command will exit now because the org slug is required to proceed.
+(node:27) MaxListenersExceededWarning: Possible EventTarget memory leak detected. 11 abort listeners added to [AbortSignal]. MaxListeners is 10. Use events.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "ok": false,
+  "message": "Input error",
+  "data": "Please review the input requirements and try again\n\n  ✖ Org name by default setting, --org, or auto-discovered (missing)\n  ✔ At least one TARGET (e.g. `.` or `./package.json`)\n  ✖ This command requires a Socket API token for access (try `socket login`)"
+}
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
