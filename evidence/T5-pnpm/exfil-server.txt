@@ -1,0 +1,2 @@
+exfil-server-1  | exfil-server listening on :9999
+exfil-server-1  | exfil-server listening on :9999
