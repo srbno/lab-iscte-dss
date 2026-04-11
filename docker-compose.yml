@@ -2,6 +2,8 @@ networks:
   lab-net:
     driver: bridge
     internal: true  # sem saída para internet
+  public-net:
+    driver: bridge   # acesso à internet para serviços de setup que precisam do npmjs.org
 
 volumes:
   verdaccio-storage:
@@ -59,17 +61,20 @@ services:
       - setup
 
   # Serviço de setup: gera package-lock.json com o pacote demo incluído
+  # Usa lab-net (para Verdaccio) + public-net (para npmjs.org/express)
   generate-lockfile:
     image: node:20-alpine
     networks:
       - lab-net
+      - public-net
     volumes:
       - ./lab/test-app:/work
     working_dir: /work
     command: >
       sh -c "
         echo '//verdaccio:4873/:_authToken=lab-token' > /root/.npmrc &&
-        npm install --registry http://verdaccio:4873
+        echo '@demo-lab:registry=http://verdaccio:4873' >> /root/.npmrc &&
+        npm install
       "
     depends_on:
       - verdaccio

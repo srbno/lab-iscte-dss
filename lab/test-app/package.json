@@ -1,0 +1,13 @@
+{
+  "name": "test-app",
+  "version": "1.0.0",
+  "description": "Aplicação-alvo Express.js para o lab de supply chain security",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "@demo-lab/supply-chain-demo": "1.0.0"
+  }
+}
