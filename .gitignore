@@ -1,0 +1,5 @@
+.env
+node_modules/
+evidence/**/*.log
+verdaccio-storage/
+nexus-data/
