@@ -1,0 +1,21 @@
+(node:70) MaxListenersExceededWarning: Possible EventTarget memory leak detected. 11 abort listeners added to [AbortSignal]. MaxListeners is 10. Use events.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+⠋ Requesting supported scan file types from API...
+⠙ 
+✔ Received Socket API response (after requesting supported scan file types).
+⠙ Searching for local files to include in scan...
+⠙ 
+✔ Found 1 file to include in scan.
+✔ Found 1 local file
+ℹ Received Socket API response (after requesting to create a scan).
+⠹ 
+⠹ 
+{
+  "ok": false,
+  "message": "Socket API error",
+  "cause": "Socket API POST request failed (400): Bad Request (reason: Need at least one file to be uploaded) (url: https://api.socket.dev/v0/orgs/iscte-lab/full-scans?branch=socket-default-branch&make_default_branch=false&scan_type=socket&repo=socket-default-repository&set_as_pending_head=false&tmp=true)",
+  "data": {
+    "code": 400
+  }
+}
+

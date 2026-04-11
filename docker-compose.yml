@@ -136,15 +136,15 @@ services:
     image: node:20-alpine
     volumes:
       - ./lab/supply-chain-demo:/package:ro
+      - ./lab/test-app:/test-app:ro
       - ./evidence/T4-socket:/evidence
-    working_dir: /package
+    working_dir: /test-app
     environment:
-      SOCKET_SECURITY_API_KEY: ${SOCKET_TOKEN:-}
+      SOCKET_CLI_API_TOKEN: ${SOCKET_TOKEN:-}
       SOCKET_ORG: ${SOCKET_ORG:-}
     command: >
       sh -c "
-        npx --yes @socketsecurity/cli@latest login --api-key \"$SOCKET_SECURITY_API_KEY\" 2>&1 &&
-        npx @socketsecurity/cli@latest scan create --no-interactive --json --org \"$SOCKET_ORG\" . 2>&1 | tee /evidence/socket.txt;
+        npx --yes @socketsecurity/cli@latest scan create --no-interactive --json --tmp --org \"$$SOCKET_ORG\" . 2>&1 | tee /evidence/socket.txt;
         echo 'socket: done'
       "
     profiles:

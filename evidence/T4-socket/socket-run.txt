@@ -1,0 +1,39 @@
+ Container code-socket-cli-run-408db537075b Creating 
+ Container code-socket-cli-run-408db537075b Created 
+(node:27) MaxListenersExceededWarning: Possible EventTarget memory leak detected. 11 abort listeners added to [AbortSignal]. MaxListeners is 10. Use events.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+⠋ Requesting supported scan file types from API...
+⠙ 
+✔ Received Socket API response (after requesting supported scan file types).
+⠙ Searching for local files to include in scan...
+⠙ 
+✔ Found 2 files to include in scan.
+✔ Found 2 local files
+✔ Received Socket API response (after requesting to create a scan).
+⠹ 
+⠹ 
+{
+  "ok": true,
+  "data": {
+    "id": "584acbdb-da70-451b-9e1d-01f4814a0ba7",
+    "created_at": "2026-04-11T22:28:57.066Z",
+    "updated_at": "2026-04-11T22:28:57.066Z",
+    "organization_id": "359670",
+    "repository_id": "c1bfaf1a-5494-4560-a276-1771f4fb120b",
+    "branch": "socket-default-branch",
+    "commit_message": "",
+    "commit_hash": "",
+    "pull_request": 0,
+    "committers": [],
+    "html_report_url": "https://socket.dev/dashboard/org/iscte-lab/sbom/584acbdb-da70-451b-9e1d-01f4814a0ba7",
+    "scan_type": "socket",
+    "unmatchedFiles": []
+  }
+}
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+socket: done
