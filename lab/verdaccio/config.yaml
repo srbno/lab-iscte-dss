@@ -1,0 +1,29 @@
+storage: /verdaccio/storage/data
+plugins: /verdaccio/plugins
+
+auth:
+  htpasswd:
+    file: /verdaccio/storage/htpasswd
+    max_users: 1000
+
+uplinks: {}
+
+packages:
+  '@demo-lab/*':
+    access: $anonymous
+    publish: $anonymous
+    unpublish: $anonymous
+  '**':
+    access: $anonymous
+
+server:
+  keepAliveTimeout: 60
+
+middlewares:
+  audit:
+    enabled: true
+
+log:
+  type: stdout
+  format: pretty
+  level: http

@@ -1,0 +1,146 @@
+networks:
+  lab-net:
+    driver: bridge
+    internal: true  # sem saída para internet
+
+volumes:
+  verdaccio-storage:
+
+services:
+  # ─── LAB INFRASTRUCTURE (lab-net, sem internet) ───────────────────────────
+
+  verdaccio:
+    image: verdaccio/verdaccio:5
+    networks:
+      - lab-net
+    volumes:
+      - ./lab/verdaccio:/verdaccio/conf
+      - verdaccio-storage:/verdaccio/storage
+
+  exfil-server:
+    build: ./lab/exfil-server
+    networks:
+      - lab-net
+
+  test-app:
+    build: ./lab/test-app
+    networks:
+      - lab-net
+    environment:
+      # Variáveis fake que simulam um ambiente de produção real
+      # O postinstall captura estas sem as conhecer por nome
+      NODE_ENV: production
+      API_KEY: sk-demo-fake-abc123xyz789
+      DATABASE_URL: postgresql://admin:password123@db:5432/production
+      AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+      AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      GITHUB_TOKEN: ghp_fakegithubtoken123456789
+      NPM_TOKEN: npm_faketoken987654321
+    depends_on:
+      - verdaccio
+      - exfil-server
+
+  # Serviço de setup: publica o pacote demo no Verdaccio (corre uma vez)
+  publisher:
+    image: node:20-alpine
+    networks:
+      - lab-net
+    volumes:
+      - ./lab/supply-chain-demo:/package
+    working_dir: /package
+    command: >
+      sh -c "
+        echo '//verdaccio:4873/:_authToken=lab-token' > /root/.npmrc &&
+        npm publish --registry http://verdaccio:4873 --no-git-checks
+      "
+    depends_on:
+      - verdaccio
+    profiles:
+      - setup
+
+  # Serviço de setup: gera package-lock.json com o pacote demo incluído
+  generate-lockfile:
+    image: node:20-alpine
+    networks:
+      - lab-net
+    volumes:
+      - ./lab/test-app:/work
+    working_dir: /work
+    command: >
+      sh -c "
+        echo '//verdaccio:4873/:_authToken=lab-token' > /root/.npmrc &&
+        npm install --registry http://verdaccio:4873
+      "
+    depends_on:
+      - verdaccio
+    profiles:
+      - setup
+
+  # ─── ANALYSIS TOOLS (sem lab-net, têm internet) ────────────────────────────
+
+  syft:
+    image: anchore/syft:latest
+    volumes:
+      - ./lab/test-app:/app:ro
+      - ./evidence/T2-syft:/evidence
+    command: /app -o cyclonedx-json=/evidence/sbom.json
+    profiles:
+      - analysis
+
+  npm-audit:
+    image: node:20-alpine
+    volumes:
+      - ./lab/test-app:/app:ro
+      - ./evidence/T3a-npm-audit:/evidence
+    working_dir: /app
+    command: >
+      sh -c "
+        npm audit --json > /evidence/npm-audit.json 2>&1 || true;
+        npm audit > /evidence/npm-audit.txt 2>&1 || true;
+        echo 'npm-audit: done'
+      "
+    profiles:
+      - analysis
+
+  osv-scanner:
+    image: ghcr.io/google/osv-scanner:latest
+    volumes:
+      - ./lab/test-app:/app:ro
+      - ./evidence/T3b-osv-scanner:/evidence
+    command: >
+      --lockfile /app/package-lock.json
+      --format json
+      --output /evidence/osv-scanner.json
+    profiles:
+      - analysis
+
+  snyk:
+    image: snyk/snyk:node
+    volumes:
+      - ./lab/test-app:/app
+      - ./evidence/T3c-snyk:/evidence
+    working_dir: /app
+    environment:
+      SNYK_TOKEN: ${SNYK_TOKEN:-}
+    command: >
+      sh -c "
+        snyk test --json > /evidence/snyk.json 2>&1 || true;
+        snyk test > /evidence/snyk.txt 2>&1 || true;
+        echo 'snyk: done'
+      "
+    profiles:
+      - analysis
+
+  socket-cli:
+    image: node:20-alpine
+    volumes:
+      - ./lab/supply-chain-demo:/package:ro
+      - ./evidence/T4-socket:/evidence
+    working_dir: /package
+    command: >
+      sh -c "
+        npx --yes @socketsecurity/cli@latest scan . 2>&1 | tee /evidence/socket.txt;
+        echo 'socket: done'
+      "
+    profiles:
+      - analysis
