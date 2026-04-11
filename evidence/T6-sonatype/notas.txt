@@ -1,0 +1,30 @@
+T6 — Sonatype Nexus Repository OSS
+
+Configuração:
+- Nexus Repository Manager 3 COMMUNITY 3.91.0-07 (gratuita)
+- Repositório npm-verdaccio-proxy: proxy do Verdaccio local (http://verdaccio:4873)
+- test-app-sonatype instala via http://sonatype:8081/repository/npm-verdaccio-proxy/
+
+Resultado:
+- Nexus funcionou como proxy — o pedido npm foi encaminhado para o Verdaccio
+- O pacote @demo-lab/supply-chain-demo@1.0.0 foi descarregado sem bloqueio
+- O postinstall executou — exfil-server recebeu os dados de exfiltração
+
+Notas de configuração:
+- EULA da Community Edition teve de ser aceite via API (/v1/system/eula) antes de poder descarregar pacotes
+- Acesso anónimo foi ativado via API (/v1/security/anonymous) para permitir npm install sem credenciais
+- O tarball URL nos metadados do pacote foi corretamente substituído pelo URL do Nexus (não do Verdaccio)
+
+Análise:
+- Nexus Repository OSS não tem capacidade de bloqueio comportamental automático
+- A funcionalidade de quarentena/firewall requer Sonatype Lifecycle (produto comercial)
+- O Repository Health Check (OSS Index) apenas cobre vulnerabilidades com CVE registado
+- Para pacotes em registries privados não indexados publicamente, não há dados de análise
+- "Should not enable health check for 'npm-verdaccio-proxy' repository" — confirmado nos logs do Nexus
+
+Utilidade para a PME:
+- Visibilidade centralizada de todos os pacotes instalados (audit log no Nexus)
+- Controlo de versões aprovadas (repositório hosted como whitelist)
+- Ponto de aplicação de políticas quando integrado com Sonatype Lifecycle
+- Gestão de licenças e inventário centralizado
+- Proxy cache reduz dependência da internet e permite auditoria

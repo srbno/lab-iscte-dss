@@ -21,7 +21,8 @@ services:
     volumes:
       - nexus-data:/nexus-data
     networks:
-      - sonatype-net
+      - sonatype-net  # internet (para boot do Nexus)
+      - lab-net       # para alcançar o Verdaccio como upstream proxy
 
   # test-app para T6: acede ao Sonatype (proxy) em vez do Verdaccio directamente
   # Está em ambas as redes: lab-net (para exfil-server) + sonatype-net (para Nexus)
