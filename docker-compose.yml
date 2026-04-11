@@ -138,9 +138,13 @@ services:
       - ./lab/supply-chain-demo:/package:ro
       - ./evidence/T4-socket:/evidence
     working_dir: /package
+    environment:
+      SOCKET_SECURITY_API_KEY: ${SOCKET_TOKEN:-}
+      SOCKET_ORG: ${SOCKET_ORG:-}
     command: >
       sh -c "
-        npx --yes @socketsecurity/cli@latest scan create --no-interactive --json . 2>&1 | tee /evidence/socket.txt;
+        npx --yes @socketsecurity/cli@latest login --api-key \"$SOCKET_SECURITY_API_KEY\" 2>&1 &&
+        npx @socketsecurity/cli@latest scan create --no-interactive --json --org \"$SOCKET_ORG\" . 2>&1 | tee /evidence/socket.txt;
         echo 'socket: done'
       "
     profiles:
