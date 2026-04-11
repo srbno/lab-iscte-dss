@@ -1,0 +1,9 @@
+{
+  "name": "exfil-server",
+  "version": "1.0.0",
+  "description": "Simula o servidor do atacante — regista dados exfiltrados via postinstall",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
