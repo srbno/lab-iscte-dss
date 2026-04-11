@@ -1,0 +1,11 @@
+{
+  "name": "@demo-lab/supply-chain-demo",
+  "version": "1.0.0",
+  "description": "Pacote demo para laboratório de supply chain security — NÃO USAR EM PRODUÇÃO",
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "files": [
+    "scripts/"
+  ]
+}
