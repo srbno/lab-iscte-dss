@@ -1,0 +1,28 @@
+LAB RESULTS — Supply Chain Security Lab
+Data: 2026-04-12
+
+T1 — Baseline (npm install sem protecção)
+  Resultado: POSTINSTALL EXECUTOU
+  Variáveis capturadas: API_KEY, DATABASE_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, GITHUB_TOKEN, NPM_TOKEN
+
+T2 — Syft (SBOM)
+  Resultado: INVENTARIOU — @demo-lab/supply-chain-demo@1.0.0 presente no SBOM
+
+T3a — npm audit
+  Resultado: 0 VULNERABILIDADES — não detectou (sem CVE registado)
+
+T3b — OSV Scanner
+  Resultado: 0 VULNERABILIDADES — não detectou (69 pacotes analisados)
+
+T3c — Snyk
+  Resultado: 0 VULNERABILIDADES — não detectou (69 dependências testadas)
+
+T4 — Socket.dev
+  Resultado: NÃO DETECTOU — pacote em registry privado não indexado pelo Socket
+
+T5 — pnpm v10
+  Resultado: BLOQUEOU — 'Ignored build scripts: @demo-lab/supply-chain-demo@1.0.0'
+
+T6 — Sonatype Nexus Repository OSS
+  Resultado: NÃO BLOQUEOU — Community Edition sem capacidade de firewall comportamental
+  Nota: npm_config_registry no payload confirma trânsito pelo Nexus

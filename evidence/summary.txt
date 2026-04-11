@@ -1,0 +1,187 @@
+
+────────────────────────────────────────────────────────────
+
+[00:04:17] SETUP: A iniciar infra e publicar pacote demo...
+ Container code-exfil-server-1 Running 
+ Container code-verdaccio-1 Running 
+ Container code-verdaccio-1 Running 
+ Container code-publisher-run-dc3310296755 Creating 
+ Container code-publisher-run-dc3310296755 Created 
+npm notice
+npm notice package: @demo-lab/supply-chain-demo@1.0.0
+npm notice Tarball Contents
+npm notice 271B package.json
+npm notice 1.3kB scripts/postinstall.js
+npm notice Tarball Details
+npm notice name: @demo-lab/supply-chain-demo
+npm notice version: 1.0.0
+npm notice filename: demo-lab-supply-chain-demo-1.0.0.tgz
+npm notice package size: 963 B
+npm notice unpacked size: 1.5 kB
+npm notice shasum: 753d1170af3a90eb4e3530391b142bbe55f98885
+npm notice integrity: sha512-DVkBpwXdrutIl[...]5v443scm0O5hw==
+npm notice total files: 2
+npm notice
+npm notice Publishing to http://verdaccio:4873/ with tag latest and default access
+npm error code E409
+npm error 409 Conflict - PUT http://verdaccio:4873/@demo-lab%2fsupply-chain-demo - this package is already present
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-04-11T23_04_21_431Z-debug-0.log
+
+[00:04:22] Setup completo.
+
+────────────────────────────────────────────────────────────
+
+[00:04:22] T1: Baseline — npm install sem protecção
+ Container code-exfil-server-1 Restarting 
+ Container code-exfil-server-1 Started 
+[00:04:25] A executar npm install...
+ Container code-verdaccio-1 Running 
+ Container code-exfil-server-1 Running 
+ Container code-test-app-run-892192432b56 Creating 
+ Container code-test-app-run-892192432b56 Created 
+
+added 1 package in 10s
+  ✓ exfil-server recebeu dados — postinstall executou com sucesso
+[00:04:38] Evidências: evidence/T1-baseline/
+
+────────────────────────────────────────────────────────────
+
+[00:04:38] T2: Syft — geração de SBOM
+ Container code-syft-run-d3d55c29e0a5 Creating 
+ Container code-syft-run-d3d55c29e0a5 Created 
+[0000]  WARN no explicit name and version provided for directory source, deriving artifact ID from the given path (which is not ideal)
+  ✓ SBOM gerado: evidence/T2-syft/sbom.json
+  ✓ Pacote demo consta do inventário
+
+────────────────────────────────────────────────────────────
+
+[00:04:40] T3a: npm audit — SCA reativo
+ Container code-npm-audit-run-ccc99a5a9ac3 Creating 
+ Container code-npm-audit-run-ccc99a5a9ac3 Created 
+npm-audit: done
+  ✓ npm audit: 0 vulnerabilidades — comportamento esperado (sem CVE)
+
+────────────────────────────────────────────────────────────
+
+[00:04:41] T3b: OSV Scanner — SCA reativo
+ Container code-osv-scanner-run-6cee1a4b2857 Creating 
+ Container code-osv-scanner-run-6cee1a4b2857 Created 
+Warning: --output has been deprecated in favor of --output-file
+Warning: plugin transitivedependency/pomxml can be risky when run on untrusted artifacts. Please ensure you trust the source code and artifacts before proceeding.
+Starting filesystem walk for root: /
+Scanned /app/package-lock.json file and found 69 packages
+End status: 0 dirs visited, 1 inodes visited, 1 Extract calls, 1.069167ms elapsed, 1.06925ms wall time
+  ✓ OSV Scanner: relatório gerado
+[00:04:42] Evidências: evidence/T3b-osv-scanner/
+
+────────────────────────────────────────────────────────────
+
+[00:04:42] T3c: Snyk — SCA reativo (base de dados proprietária)
+ Container code-snyk-run-6f1a139c5472 Creating 
+ Container code-snyk-run-6f1a139c5472 Created 
+snyk: done
+
+Testing /app...
+
+Organization:      silvioromano.ai
+Package manager:   npm
+Target file:       package-lock.json
+Project name:      test-app
+Open source:       no
+Project path:      /app
+Licenses:          enabled
+
+✔ Tested 69 dependencies for known issues, no vulnerable paths found.
+
+Next steps:
+- Run `snyk monitor` to be notified about new related vulnerabilities.
+- Run `snyk test` as part of your CI/test.
+
+
+[00:05:00] Evidências: evidence/T3c-snyk/
+
+────────────────────────────────────────────────────────────
+
+[00:05:00] T4: Socket.dev — análise comportamental
+ Container code-socket-cli-run-5d85bae58369 Creating 
+ Container code-socket-cli-run-5d85bae58369 Created 
+(node:27) MaxListenersExceededWarning: Possible EventTarget memory leak detected. 11 abort listeners added to [AbortSignal]. MaxListeners is 10. Use events.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+⠋ Requesting supported scan file types from API...
+⠙ 
+✔ Received Socket API response (after requesting supported scan file types).
+⠙ Searching for local files to include in scan...
+⠙ 
+✔ Found 2 files to include in scan.
+✔ Found 2 local files
+✔ Received Socket API response (after requesting to create a scan).
+⠹ 
+⠹ 
+{
+  "ok": true,
+  "data": {
+    "id": "a15e2c0f-fc6a-4111-9987-aa200a8096c6",
+    "created_at": "2026-04-11T23:05:06.360Z",
+    "updated_at": "2026-04-11T23:05:06.360Z",
+    "organization_id": "359670",
+    "repository_id": "c1bfaf1a-5494-4560-a276-1771f4fb120b",
+    "branch": "socket-default-branch",
+    "commit_message": "",
+    "commit_hash": "",
+    "pull_request": 0,
+    "committers": [],
+    "html_report_url": "https://socket.dev/dashboard/org/iscte-lab/sbom/a15e2c0f-fc6a-4111-9987-aa200a8096c6",
+    "scan_type": "socket",
+    "unmatchedFiles": []
+  }
+}
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+socket: done
+[00:05:06] Evidências: evidence/T4-socket/
+
+────────────────────────────────────────────────────────────
+
+[00:05:06] T5: pnpm v10 — bloqueio de lifecycle scripts
+ Container code-exfil-server-1 Restarting 
+ Container code-exfil-server-1 Started 
+[00:05:09] A executar pnpm install...
+ Container code-exfil-server-1 Running 
+ Container code-verdaccio-1 Running 
+ Container code-test-app-run-87926017ede4 Creating 
+ Container code-test-app-run-87926017ede4 Created 
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1
++
+Progress: resolved 1, reused 0, downloaded 1, added 1, done
+
+dependencies:
++ @demo-lab/supply-chain-demo 1.0.0
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: @demo-lab/supply-chain-demo@1.0.0.                  │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Done in 252ms using pnpm v10.33.0
+  ✗ INESPERADO: postinstall executou — pnpm não bloqueou
+[00:05:17] Evidências: evidence/T5-pnpm/
+
+────────────────────────────────────────────────────────────
+
+[00:05:17] Todos os testes concluídos. Resumo:
+  T1-baseline
+  T2-syft
+  T3a-npm-audit
+  T3b-osv-scanner
+  T3c-snyk
+  T4-socket
+  T5-pnpm
+  T6-sonatype
+[00:05:17] T6 (Sonatype) requer configuração manual — ver Task 12.

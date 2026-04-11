@@ -1,6 +1,6 @@
- Container code-exfil-server-1 Running 
  Container code-verdaccio-1 Running 
- Container code-test-app-run-382d100080d9 Creating 
- Container code-test-app-run-382d100080d9 Created 
+ Container code-exfil-server-1 Running 
+ Container code-test-app-run-892192432b56 Creating 
+ Container code-test-app-run-892192432b56 Created 
 
 added 1 package in 10s
