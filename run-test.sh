@@ -159,7 +159,8 @@ t5() {
 
   sleep 2
 
-  docker compose logs exfil-server > "$EVIDENCE/T5-pnpm/exfil-server.txt"
+  # --since 15s: apenas logs após o restart do exfil-server (evita falsos positivos do T1)
+  docker compose logs --since 15s exfil-server > "$EVIDENCE/T5-pnpm/exfil-server.txt"
 
   if grep -q "EXFILTRATION RECEIVED" "$EVIDENCE/T5-pnpm/exfil-server.txt"; then
     fail "INESPERADO: postinstall executou — pnpm não bloqueou"
