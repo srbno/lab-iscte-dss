@@ -121,18 +121,14 @@ services:
 
   snyk:
     image: snyk/snyk:node
+    platform: linux/amd64
     volumes:
       - ./lab/test-app:/app
       - ./evidence/T3c-snyk:/evidence
     working_dir: /app
     environment:
       SNYK_TOKEN: ${SNYK_TOKEN:-}
-    command: >
-      sh -c "
-        snyk test --json > /evidence/snyk.json 2>&1 || true;
-        snyk test > /evidence/snyk.txt 2>&1 || true;
-        echo 'snyk: done'
-      "
+      COMMAND: "snyk test --json > /evidence/snyk.json 2>&1 || true; snyk test > /evidence/snyk.txt 2>&1 || true; echo 'snyk: done'"
     profiles:
       - analysis
 

@@ -1,0 +1,18 @@
+
+Testing /app...
+
+Organization:      silvioromano.ai
+Package manager:   npm
+Target file:       package-lock.json
+Project name:      test-app
+Open source:       no
+Project path:      /app
+Licenses:          enabled
+
+✔ Tested 69 dependencies for known issues, no vulnerable paths found.
+
+Next steps:
+- Run `snyk monitor` to be notified about new related vulnerabilities.
+- Run `snyk test` as part of your CI/test.
+
+
