@@ -15,6 +15,7 @@ services:
     image: verdaccio/verdaccio:5
     networks:
       - lab-net
+      - public-net
     volumes:
       - ./lab/verdaccio:/verdaccio/conf
       - verdaccio-storage:/verdaccio/storage
@@ -74,7 +75,7 @@ services:
       sh -c "
         echo '//verdaccio:4873/:_authToken=lab-token' > /root/.npmrc &&
         echo '@demo-lab:registry=http://verdaccio:4873' >> /root/.npmrc &&
-        npm install
+        npm install --package-lock-only
       "
     depends_on:
       - verdaccio
@@ -85,6 +86,10 @@ services:
 
   syft:
     image: anchore/syft:latest
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: "0.5"
     volumes:
       - ./lab/test-app:/app:ro
       - ./evidence/T2-syft:/evidence
@@ -94,6 +99,10 @@ services:
 
   npm-audit:
     image: node:20-alpine
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: "0.5"
     volumes:
       - ./lab/test-app:/app:ro
       - ./evidence/T3a-npm-audit:/evidence
@@ -109,6 +118,10 @@ services:
 
   osv-scanner:
     image: ghcr.io/google/osv-scanner:latest
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: "0.5"
     volumes:
       - ./lab/test-app:/app:ro
       - ./evidence/T3b-osv-scanner:/evidence
@@ -122,6 +135,10 @@ services:
   snyk:
     image: snyk/snyk:node
     platform: linux/amd64
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: "0.5"
     volumes:
       - ./lab/test-app:/app
       - ./evidence/T3c-snyk:/evidence
@@ -134,6 +151,10 @@ services:
 
   socket-cli:
     image: node:20-alpine
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: "0.5"
     volumes:
       - ./lab/supply-chain-demo:/package:ro
       - ./lab/test-app:/test-app:ro

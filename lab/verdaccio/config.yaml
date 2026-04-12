@@ -6,7 +6,9 @@ auth:
     file: /verdaccio/storage/htpasswd
     max_users: 1000
 
-uplinks: {}
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
 
 packages:
   '@demo-lab/*':
@@ -15,6 +17,7 @@ packages:
     unpublish: $anonymous
   '**':
     access: $anonymous
+    proxy: npmjs
 
 server:
   keepAliveTimeout: 60
