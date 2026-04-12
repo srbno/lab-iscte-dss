@@ -2,7 +2,12 @@
 
 Componente prático do trabalho "Gestão Segura de Dependências de Software: Análise de Práticas, Ferramentas e Falhas no Ecossistema NPM" (MEI ISCTE, Desenvolvimento de Código Seguro, 2025/2026).
 
-O laboratório demonstra empiricamente como um pacote NPM com script `postinstall` malicioso exfiltra variáveis de ambiente — e avalia o comportamento de seis ferramentas de segurança face a esse ataque.
+O laboratório demonstra empiricamente dois tipos de ameaça de supply chain e avalia o comportamento de sete ferramentas de segurança face a cada uma:
+
+| Ameaça | Pacote | Detecção esperada |
+|--------|--------|-------------------|
+| Zero-day comportamental | `@demo-lab/supply-chain-demo@1.0.0` — `postinstall` exfiltra `process.env` | Apenas ferramentas comportamentais |
+| CVE conhecido | `lodash@4.17.11` — prototype pollution (7 GHSAs, CVSS 9.1) | Ferramentas SCA reativas |
 
 ---
 
@@ -19,14 +24,15 @@ Nada é instalado no sistema operativo do utilizador — todas as ferramentas co
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  lab-net (internal: true — sem acesso à internet)   │
+│  lab-net (internal: true — sem acesso directo à net)│
 │                                                     │
 │  ┌──────────┐   ┌──────────┐   ┌────────────────┐  │
 │  │ verdaccio│   │ test-app │   │  exfil-server  │  │
 │  │  :4873   │   │ Express  │   │     :9999      │  │
 │  └──────────┘   └──────────┘   └────────────────┘  │
-│   registry       instala o        recebe POSTs      │
-│   local          pacote demo      do postinstall    │
+│   registry       instala as       recebe POSTs      │
+│   local +        dependências     do postinstall    │
+│   proxy npmjs    (demo+lodash)                      │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
@@ -37,15 +43,17 @@ Nada é instalado no sistema operativo do utilizador — todas as ferramentas co
 └─────────────────────────────────────────────────────┘
 ```
 
-**Cenário simulado:** uma PME sem registry privado. O Verdaccio representa o npmjs.com onde um pacote comprometido foi publicado. O `test-app` representa o ambiente de desenvolvimento ou CI/CD da empresa.
+**Cenário simulado:** uma PME sem registry privado. O Verdaccio representa o npmjs.com onde um pacote comprometido foi publicado. O `test-app` representa o ambiente de desenvolvimento ou CI/CD da empresa. O Verdaccio serve o pacote demo localmente e faz proxy de pacotes públicos (lodash, express) via uplink npmjs.
 
 ---
 
-## Pacote demo
+## Pacotes do test-app
 
-**`@demo-lab/supply-chain-demo@1.0.0`** — em `lab/supply-chain-demo/`
-
+**`@demo-lab/supply-chain-demo@1.0.0`** (`lab/supply-chain-demo/`)
 O script `postinstall` simula um ataque de supply chain real: explora o ambiente de forma cega (sem conhecer os nomes das variáveis) e envia `process.env` completo por HTTP POST para o `exfil-server`. O `test-app` tem variáveis de ambiente fake que representam os tipos de credenciais visadas por ataques reais (AWS keys, tokens de CI/CD, URLs de base de dados).
+
+**`lodash@4.17.11`** (npm público, via proxy Verdaccio→npmjs)
+Versão com múltiplos CVEs de prototype pollution e code injection. Incluída para que as ferramentas SCA reativas tenham algo a detectar, criando o contraste central do lab.
 
 ---
 
@@ -57,15 +65,15 @@ CODE/
 ├── .env                          ← credenciais reais (não commitado)
 ├── docker-compose.yml            ← infra principal + ferramentas de análise
 ├── docker-compose.sonatype.yml   ← overlay para T6 (Sonatype Nexus)
-├── run-test.sh                   ← orquestrador de testes
+├── run-test.sh                   ← orquestrador v2
 ├── lab/
-│   ├── verdaccio/config.yaml     ← configuração do registry local
+│   ├── verdaccio/config.yaml     ← registry local com uplink npmjs
 │   ├── supply-chain-demo/        ← pacote malicioso demo
-│   ├── test-app/                 ← aplicação Express alvo
+│   ├── test-app/                 ← aplicação Express alvo (deps: demo + lodash)
 │   └── exfil-server/             ← servidor que regista dados exfiltrados
 └── evidence/
-    ├── lab-results.txt           ← resumo de todos os testes
-    ├── summary.txt               ← output completo da suite
+    ├── lab-results.txt           ← resumo completo dos testes v2
+    ├── archive/                  ← evidências v1 arquivadas (não commitadas)
     ├── T1-baseline/
     ├── T2-syft/
     ├── T3a-npm-audit/
@@ -80,11 +88,13 @@ CODE/
 
 ## Como correr
 
-### Primeira vez (setup)
+### Gestão da infra
 
 ```bash
-# Arrancar infra e publicar o pacote demo no Verdaccio
-./run-test.sh setup
+./run-test.sh start      # arranca verdaccio e exfil-server
+./run-test.sh setup      # publica pacote demo no Verdaccio (obrigatório antes de T1/T5)
+./run-test.sh archive    # arquiva evidências actuais → evidence/archive/TIMESTAMP/
+./run-test.sh reset      # docker compose down --volumes --remove-orphans
 ```
 
 ### Executar um teste individual
@@ -99,7 +109,7 @@ CODE/
 ./run-test.sh T5    # pnpm v10
 ```
 
-### Executar a suite completa
+### Executar a suite completa (T1–T5)
 
 ```bash
 set -a; source .env; set +a   # carregar tokens antes de T3c e T4
@@ -119,13 +129,6 @@ docker exec $(docker compose -f docker-compose.yml -f docker-compose.sonatype.ym
 # Aceder ao UI em http://localhost:8081 e configurar proxy npm apontando para http://verdaccio:4873
 ```
 
-### Parar tudo
-
-```bash
-docker compose down          # infra principal
-docker compose -f docker-compose.yml -f docker-compose.sonatype.yml down -v   # incluindo Sonatype
-```
-
 ---
 
 ## Credenciais (`CODE/.env`)
@@ -141,17 +144,17 @@ Copiar `.env.example` para `.env` e preencher:
 
 ---
 
-## Resultados
+## Resultados (v2)
 
-| Teste | Ferramenta | Resultado |
-|-------|-----------|-----------|
-| T1 | Baseline (npm install) | Ataque executou — credenciais exfiltradas |
-| T2 | Syft | Inventariou o pacote no SBOM |
-| T3a | npm audit | 0 vulnerabilidades (sem CVE) |
-| T3b | OSV Scanner | 0 vulnerabilidades (sem CVE) |
-| T3c | Snyk | 0 vulnerabilidades (sem CVE) |
-| T4 | Socket.dev | Não detetou — pacote em registry privado não indexado |
-| T5 | pnpm v10 | Bloqueou — "Ignored build scripts" |
-| T6 | Sonatype Nexus OSS | Não bloqueou — Community Edition sem firewall comportamental |
+| Teste | Ferramenta | Paradigma | lodash@4.17.11 | postinstall attack |
+|-------|-----------|-----------|:--------------:|:-----------------:|
+| T1 | Baseline (npm install) | — | instalado | **EXECUTOU** — 7 vars exfiltradas |
+| T2 | Syft | SBOM | inventariado | inventariado (sem alerta) |
+| T3a | npm audit | SCA reativo | **1 crítica** | não detectado (sem CVE) |
+| T3b | OSV Scanner | SCA reativo | **7 vulns** | não detectado (sem CVE) |
+| T3c | Snyk | SCA reativo | **9 vulns** | não detectado (sem CVE) |
+| T4 | Socket.dev | Comportamental | detectado (npm público) | não detectado (registry privado) |
+| T5 | pnpm v10 | Arquitectural | instalado | **BLOQUEOU** — "Ignored build scripts" |
+| T6 | Sonatype Nexus OSS | Governança | não bloqueou | não bloqueou (OSS sem firewall) |
 
-Evidências completas em `evidence/`. Resumo em `evidence/lab-results.txt`.
+Evidências completas em `evidence/`. Resumo detalhado em `evidence/lab-results.txt`.

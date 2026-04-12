@@ -1,5 +1,9 @@
 .env
 node_modules/
 evidence/**/*.log
+evidence/archive/
 verdaccio-storage/
 nexus-data/
+.specs/
+.DS_Store
+*.tgz
