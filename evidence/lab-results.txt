@@ -1,28 +1,125 @@
-LAB RESULTS — Supply Chain Security Lab
+LAB RESULTS v2 — Supply Chain Security Lab
 Data: 2026-04-12
 
+================================================================================
 T1 — Baseline (npm install sem protecção)
+================================================================================
   Resultado: POSTINSTALL EXECUTOU
-  Variáveis capturadas: API_KEY, DATABASE_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, GITHUB_TOKEN, NPM_TOKEN
+  Dependências instaladas: @demo-lab/supply-chain-demo@1.0.0, lodash@4.17.11
+  Variáveis exfiltradas (fake credentials capturadas pelo postinstall):
+    - API_KEY: sk-demo-fake-abc123xyz789
+    - DATABASE_URL: postgresql://admin:password123@db:5432/production
+    - AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+    - AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    - GITHUB_TOKEN: ghp_fakegithubtoken123456789
+    - NPM_TOKEN: npm_faketoken987654321
+    - NODE_ENV: production
+  Nota: postinstall fez blind env dump via process.env — capturou todas as
+        variáveis do ambiente sem as conhecer por nome.
 
+================================================================================
 T2 — Syft (SBOM)
-  Resultado: INVENTARIOU — @demo-lab/supply-chain-demo@1.0.0 presente no SBOM
+================================================================================
+  Resultado: INVENTARIOU — ambas as dependências presentes no SBOM
+  Componentes: 72 (inclui dependências transitivas do Express.js)
+  @demo-lab/supply-chain-demo@1.0.0: PRESENTE
+  lodash@4.17.11: PRESENTE
+  Nota: Syft limita-se a inventariar. Não analisa comportamento nem CVEs.
+        O pacote malicioso consta do SBOM mas não é sinalizado como risco.
 
+================================================================================
 T3a — npm audit
-  Resultado: 0 VULNERABILIDADES — não detectou (sem CVE registado)
+================================================================================
+  Resultado: 1 VULNERABILIDADE CRÍTICA — lodash@4.17.11 flagged
+  Vulnerabilidades reportadas para lodash@4.17.11:
+    - Command Injection (GHSA-35jh-r3h4-6jhm) — Critical
+    - Prototype Pollution (GHSA-jf85-cpcp-j695) — High
+    - Prototype Pollution (GHSA-p6mc-m468-83gw) — High
+    - ReDoS (GHSA-29mw-wpgm-hmr9)
+    - Prototype Pollution (GHSA-xxjr-mmjv-4gpg)
+    - Code Injection via _.template (GHSA-r5fr-rjxr-66jc)
+    - Prototype Pollution via array path bypass (GHSA-f23m-r3pf-42rh)
+  @demo-lab/supply-chain-demo: SEM CVE REGISTADO — não detectado
 
+================================================================================
 T3b — OSV Scanner
-  Resultado: 0 VULNERABILIDADES — não detectou (69 pacotes analisados)
+================================================================================
+  Resultado: 7 VULNERABILIDADES — lodash@4.17.11 flagged
+  Vulnerabilidades OSV para lodash@4.17.11:
+    - GHSA-29mw-wpgm-hmr9 — ReDoS in lodash
+    - GHSA-35jh-r3h4-6jhm — Command Injection in lodash
+    - GHSA-f23m-r3pf-42rh — Prototype Pollution via array path bypass
+    - GHSA-jf85-cpcp-j695 — Prototype Pollution in lodash
+    - GHSA-p6mc-m468-83gw — Prototype Pollution in lodash
+    - GHSA-r5fr-rjxr-66jc — Code Injection via _.template
+    - GHSA-xxjr-mmjv-4gpg — Prototype Pollution in _.unset and _.omit
+  @demo-lab/supply-chain-demo: SEM ENTRADA OSV — não detectado
 
+================================================================================
 T3c — Snyk
-  Resultado: 0 VULNERABILIDADES — não detectou (69 dependências testadas)
+================================================================================
+  Resultado: EXECUTOU — 9 VULNERABILIDADES — lodash@4.17.11 flagged
+  Vulnerabilidades Snyk para lodash@4.17.11:
+    - Prototype Pollution (new) [Medium] — SNYK-JS-LODASH-15869619
+    - Prototype Pollution [Medium] — SNYK-JS-LODASH-15053838
+    - ReDoS [Medium] — SNYK-JS-LODASH-1018905
+    - Arbitrary Code Injection (new) [High] — SNYK-JS-LODASH-15869625
+    - Code Injection [High] — SNYK-JS-LODASH-1040724
+    - Prototype Pollution [High] — SNYK-JS-LODASH-567746
+    - Prototype Pollution [High] — SNYK-JS-LODASH-608086
+    - Prototype Pollution [High] — SNYK-JS-LODASH-6139239
+    - Prototype Pollution [High] — SNYK-JS-LODASH-450202
+  @demo-lab/supply-chain-demo: SEM CVE — não detectado
+  Org: silvioromano.ai | 70 dependências analisadas | 9 issues, 9 vulnerable paths
 
+================================================================================
 T4 — Socket.dev
-  Resultado: NÃO DETECTOU — pacote em registry privado não indexado pelo Socket
+================================================================================
+  Resultado: EXECUTOU — scan criado com sucesso
+  Scan ID: 472518f2-f436-4b93-ac8e-755519d44065
+  Report URL: https://socket.dev/dashboard/org/iscte-lab/sbom/472518f2-f436-4b93-ac8e-755519d44065
+  @demo-lab/supply-chain-demo: NÃO DETECTADO — registry privado (Verdaccio)
+    não indexado pelo Socket.dev (aguarda análise no dashboard web)
+  Nota: Socket.dev analisa pacotes publicados no registry npm público.
+        Em ataque real (via npmjs.com), flagging do postinstall + http.request
+        + process.env seria esperado. Neste lab, o pacote está em Verdaccio
+        privado, inacessível ao motor de análise do Socket.
 
+================================================================================
 T5 — pnpm v10
+================================================================================
   Resultado: BLOQUEOU — 'Ignored build scripts: @demo-lab/supply-chain-demo@1.0.0'
+  pnpm v10.33.0 — secure-by-default: lifecycle scripts ignorados por omissão
+  @demo-lab/supply-chain-demo@1.0.0: postinstall BLOQUEADO — exfil não executou
+  lodash@4.17.11: instalado normalmente (sem lifecycle scripts)
+  exfil-server: ZERO dados recebidos — confirmado
 
+================================================================================
 T6 — Sonatype Nexus Repository OSS
-  Resultado: NÃO BLOQUEOU — Community Edition sem capacidade de firewall comportamental
-  Nota: npm_config_registry no payload confirma trânsito pelo Nexus
+================================================================================
+  Resultado: IGNORADO — requer configuração manual do proxy npm no UI do Nexus
+  Nota: Nexus OSS é um repository manager, não um firewall comportamental.
+        Bloqueio requer Sonatype Lifecycle (edição comercial).
+        Community Edition não inclui IQ Server / behavioural firewall.
+
+================================================================================
+SUMÁRIO EXECUTIVO
+================================================================================
+  Ferramentas SCA reativas (npm audit, OSV Scanner, Snyk):
+    DETECTAM vulnerabilidades CVE conhecidas (lodash@4.17.11) ✓
+    NÃO DETECTAM ameaças comportamentais sem CVE (supply-chain-demo) ✗
+
+  SBOM (Syft):
+    Inventaria ambos os pacotes ✓
+    Não analisa comportamento nem CVEs ✗
+
+  Análise comportamental (Socket.dev):
+    Analisa pacotes npm públicos por comportamento ✓
+    Cego a pacotes em registries privados ✗ (limitação do lab)
+
+  Architectural (pnpm v10):
+    BLOQUEIA lifecycle scripts por defeito ✓ — mitigação mais eficaz no lab
+    Requer aprovação explícita para permitir postinstall
+
+  Governance (Sonatype Nexus OSS):
+    Repository manager sem capacidade de firewall na edição comunitária ✗

@@ -13,9 +13,9 @@
 {
   "ok": true,
   "data": {
-    "id": "a15e2c0f-fc6a-4111-9987-aa200a8096c6",
-    "created_at": "2026-04-11T23:05:06.360Z",
-    "updated_at": "2026-04-11T23:05:06.360Z",
+    "id": "472518f2-f436-4b93-ac8e-755519d44065",
+    "created_at": "2026-04-12T16:06:34.499Z",
+    "updated_at": "2026-04-12T16:06:34.499Z",
     "organization_id": "359670",
     "repository_id": "c1bfaf1a-5494-4560-a276-1771f4fb120b",
     "branch": "socket-default-branch",
@@ -23,7 +23,7 @@
     "commit_hash": "",
     "pull_request": 0,
     "committers": [],
-    "html_report_url": "https://socket.dev/dashboard/org/iscte-lab/sbom/a15e2c0f-fc6a-4111-9987-aa200a8096c6",
+    "html_report_url": "https://socket.dev/dashboard/org/iscte-lab/sbom/472518f2-f436-4b93-ac8e-755519d44065",
     "scan_type": "socket",
     "unmatchedFiles": []
   }

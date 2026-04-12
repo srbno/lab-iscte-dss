@@ -1,6 +1,33 @@
 
 Testing /app...
 
+Tested 70 dependencies for known issues, found 9 issues, 9 vulnerable paths.
+
+
+Issues to fix by upgrading:
+
+  Upgrade lodash@4.17.11 to lodash@4.18.1 to fix
+  ✗ Prototype Pollution (new) [Medium Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-15869619] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Prototype Pollution [Medium Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-15053838] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Regular Expression Denial of Service (ReDoS) [Medium Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-1018905] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Arbitrary Code Injection (new) [High Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-15869625] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Code Injection [High Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-1040724] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Prototype Pollution [High Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-567746] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Prototype Pollution [High Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-608086] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Prototype Pollution [High Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-6139239] in lodash@4.17.11
+    introduced by lodash@4.17.11
+  ✗ Prototype Pollution [High Severity][https://security.snyk.io/vuln/SNYK-JS-LODASH-450202] in lodash@4.17.11
+    introduced by lodash@4.17.11
+
+
+
 Organization:      silvioromano.ai
 Package manager:   npm
 Target file:       package-lock.json
@@ -8,11 +35,5 @@ Project name:      test-app
 Open source:       no
 Project path:      /app
 Licenses:          enabled
-
-✔ Tested 69 dependencies for known issues, no vulnerable paths found.
-
-Next steps:
-- Run `snyk monitor` to be notified about new related vulnerabilities.
-- Run `snyk test` as part of your CI/test.
 
 

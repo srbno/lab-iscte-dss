@@ -1,8 +1,9 @@
 exfil-server-1  | exfil-server listening on :9999
 exfil-server-1  | exfil-server listening on :9999
+exfil-server-1  | exfil-server listening on :9999
 exfil-server-1  | 
 exfil-server-1  | ============================================================
-exfil-server-1  | EXFILTRATION RECEIVED [2026-04-11T22:58:05.260Z]
+exfil-server-1  | EXFILTRATION RECEIVED [2026-04-12T16:05:08.828Z]
 exfil-server-1  | ============================================================
 exfil-server-1  | {
 exfil-server-1  |   "env": {
@@ -11,7 +12,7 @@ exfil-server-1  |     "npm_package_dev": "",
 exfil-server-1  |     "DATABASE_URL": "postgresql://admin:password123@db:5432/production",
 exfil-server-1  |     "npm_config_user_agent": "npm/10.8.2 node/v20.20.2 linux arm64 workspaces/false",
 exfil-server-1  |     "NODE_VERSION": "20.20.2",
-exfil-server-1  |     "HOSTNAME": "22ad3623c7e1",
+exfil-server-1  |     "HOSTNAME": "c5cbace905d3",
 exfil-server-1  |     "YARN_VERSION": "1.22.22",
 exfil-server-1  |     "npm_node_execpath": "/usr/local/bin/node",
 exfil-server-1  |     "npm_package_resolved": "http://verdaccio:4873/@demo-lab/supply-chain-demo/-/supply-chain-demo-1.0.0.tgz",
@@ -28,6 +29,7 @@ exfil-server-1  |     "COLOR": "0",
 exfil-server-1  |     "NPM_TOKEN": "npm_faketoken987654321",
 exfil-server-1  |     "npm_config_prefix": "/usr/local",
 exfil-server-1  |     "npm_config_npm_version": "10.8.2",
+exfil-server-1  |     "npm_config_registry": "http://verdaccio:4873/",
 exfil-server-1  |     "npm_config_cache": "/root/.npm",
 exfil-server-1  |     "npm_config_node_gyp": "/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js",
 exfil-server-1  |     "PATH": "/install/node_modules/@demo-lab/supply-chain-demo/node_modules/.bin:/install/node_modules/@demo-lab/node_modules/.bin:/install/node_modules/node_modules/.bin:/install/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
@@ -54,69 +56,8 @@ exfil-server-1  |   },
 exfil-server-1  |   "cwd": "/install/node_modules/@demo-lab/supply-chain-demo",
 exfil-server-1  |   "platform": "linux",
 exfil-server-1  |   "arch": "arm64",
-exfil-server-1  |   "hostname": "22ad3623c7e1",
-exfil-server-1  |   "timestamp": "2026-04-11T22:58:05.250Z"
-exfil-server-1  | }
-exfil-server-1  | ============================================================
-exfil-server-1  | 
-exfil-server-1  | exfil-server listening on :9999
-exfil-server-1  | exfil-server listening on :9999
-exfil-server-1  | 
-exfil-server-1  | ============================================================
-exfil-server-1  | EXFILTRATION RECEIVED [2026-04-11T23:04:26.390Z]
-exfil-server-1  | ============================================================
-exfil-server-1  | {
-exfil-server-1  |   "env": {
-exfil-server-1  |     "GITHUB_TOKEN": "ghp_fakegithubtoken123456789",
-exfil-server-1  |     "npm_package_dev": "",
-exfil-server-1  |     "DATABASE_URL": "postgresql://admin:password123@db:5432/production",
-exfil-server-1  |     "npm_config_user_agent": "npm/10.8.2 node/v20.20.2 linux arm64 workspaces/false",
-exfil-server-1  |     "NODE_VERSION": "20.20.2",
-exfil-server-1  |     "HOSTNAME": "349df2de9dc4",
-exfil-server-1  |     "YARN_VERSION": "1.22.22",
-exfil-server-1  |     "npm_node_execpath": "/usr/local/bin/node",
-exfil-server-1  |     "npm_package_resolved": "http://verdaccio:4873/@demo-lab/supply-chain-demo/-/supply-chain-demo-1.0.0.tgz",
-exfil-server-1  |     "SHLVL": "3",
-exfil-server-1  |     "npm_config_noproxy": "",
-exfil-server-1  |     "HOME": "/root",
-exfil-server-1  |     "OLDPWD": "/app",
-exfil-server-1  |     "npm_package_optional": "",
-exfil-server-1  |     "npm_package_json": "/install/node_modules/@demo-lab/supply-chain-demo/package.json",
-exfil-server-1  |     "npm_config_userconfig": "/root/.npmrc",
-exfil-server-1  |     "npm_config_local_prefix": "/install",
-exfil-server-1  |     "npm_package_integrity": "sha512-DVkBpwXdrutIl1fvUE4sYgwQx9JekHYMVosn37/kcaPmctn1iEwXcpgB6IFbbUf//ip4WSjJu5v443scm0O5hw==",
-exfil-server-1  |     "COLOR": "0",
-exfil-server-1  |     "NPM_TOKEN": "npm_faketoken987654321",
-exfil-server-1  |     "npm_config_prefix": "/usr/local",
-exfil-server-1  |     "npm_config_npm_version": "10.8.2",
-exfil-server-1  |     "npm_config_cache": "/root/.npm",
-exfil-server-1  |     "npm_config_node_gyp": "/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js",
-exfil-server-1  |     "PATH": "/install/node_modules/@demo-lab/supply-chain-demo/node_modules/.bin:/install/node_modules/@demo-lab/node_modules/.bin:/install/node_modules/node_modules/.bin:/install/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-exfil-server-1  |     "NODE": "/usr/local/bin/node",
-exfil-server-1  |     "npm_package_name": "@demo-lab/supply-chain-demo",
-exfil-server-1  |     "npm_lifecycle_script": "node scripts/postinstall.js",
-exfil-server-1  |     "API_KEY": "sk-demo-fake-abc123xyz789",
-exfil-server-1  |     "npm_package_version": "1.0.0",
-exfil-server-1  |     "npm_lifecycle_event": "postinstall",
-exfil-server-1  |     "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
-exfil-server-1  |     "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-exfil-server-1  |     "npm_package_dev_optional": "",
-exfil-server-1  |     "npm_config_globalconfig": "/usr/local/etc/npmrc",
-exfil-server-1  |     "npm_config_init_module": "/root/.npm-init.js",
-exfil-server-1  |     "npm_package_peer": "",
-exfil-server-1  |     "PWD": "/install/node_modules/@demo-lab/supply-chain-demo",
-exfil-server-1  |     "npm_execpath": "/usr/local/lib/node_modules/npm/bin/npm-cli.js",
-exfil-server-1  |     "npm_config_global_prefix": "/usr/local",
-exfil-server-1  |     "npm_command": "install",
-exfil-server-1  |     "NODE_ENV": "production",
-exfil-server-1  |     "INIT_CWD": "/install",
-exfil-server-1  |     "EDITOR": "vi"
-exfil-server-1  |   },
-exfil-server-1  |   "cwd": "/install/node_modules/@demo-lab/supply-chain-demo",
-exfil-server-1  |   "platform": "linux",
-exfil-server-1  |   "arch": "arm64",
-exfil-server-1  |   "hostname": "349df2de9dc4",
-exfil-server-1  |   "timestamp": "2026-04-11T23:04:26.382Z"
+exfil-server-1  |   "hostname": "c5cbace905d3",
+exfil-server-1  |   "timestamp": "2026-04-12T16:05:08.819Z"
 exfil-server-1  | }
 exfil-server-1  | ============================================================
 exfil-server-1  | 

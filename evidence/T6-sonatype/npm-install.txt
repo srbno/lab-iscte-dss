@@ -1,6 +1,0 @@
- Container code-exfil-server-1 Running 
- Container code-sonatype-1 Running 
- Container code-test-app-sonatype-run-ae6dc1483259 Creating 
- Container code-test-app-sonatype-run-ae6dc1483259 Created 
-
-added 1 package in 6s

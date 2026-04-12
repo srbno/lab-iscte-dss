@@ -1,6 +1,13 @@
- Container code-verdaccio-1 Running 
  Container code-exfil-server-1 Running 
- Container code-test-app-run-892192432b56 Creating 
- Container code-test-app-run-892192432b56 Created 
+ Container code-verdaccio-1 Running 
+ Container code-test-app-run-6ac7b61b3bf1 Creating 
+ Container code-test-app-run-6ac7b61b3bf1 Created 
 
-added 1 package in 10s
+added 2 packages, and audited 3 packages in 6s
+
+1 critical severity vulnerability
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.

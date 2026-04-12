@@ -1,14 +1,15 @@
  Container code-exfil-server-1 Running 
  Container code-verdaccio-1 Running 
- Container code-test-app-run-87926017ede4 Creating 
- Container code-test-app-run-87926017ede4 Created 
+ Container code-test-app-run-2a53fccd9183 Creating 
+ Container code-test-app-run-2a53fccd9183 Created 
 Progress: resolved 1, reused 0, downloaded 0, added 0
-Packages: +1
-+
-Progress: resolved 1, reused 0, downloaded 1, added 1, done
+Packages: +2
+++
+Progress: resolved 2, reused 0, downloaded 2, added 2, done
 
 dependencies:
 + @demo-lab/supply-chain-demo 1.0.0
++ lodash 4.17.11 (4.18.1 is available)
 
 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
 │                                                                              │
@@ -17,4 +18,4 @@ dependencies:
 │   to run scripts.                                                            │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-Done in 252ms using pnpm v10.33.0
+Done in 357ms using pnpm v10.33.0
