@@ -2,7 +2,7 @@
 
 Componente prático do trabalho "Gestão Segura de Dependências de Software: Análise de Práticas, Ferramentas e Falhas no Ecossistema NPM" (MEI ISCTE, Desenvolvimento de Código Seguro, 2025/2026).
 
-O laboratório demonstra empiricamente dois tipos de ameaça de supply chain e avalia o comportamento de sete ferramentas de segurança face a cada uma:
+O laboratório demonstra empiricamente dois tipos de ameaça de supply chain e avalia o comportamento de seis ferramentas de segurança face a cada uma:
 
 | Ameaça | Pacote | Detecção esperada |
 |--------|--------|-------------------|
@@ -64,7 +64,6 @@ CODE/
 ├── .env.example                  ← template de credenciais (sem valores)
 ├── .env                          ← credenciais reais (não commitado)
 ├── docker-compose.yml            ← infra principal + ferramentas de análise
-├── docker-compose.sonatype.yml   ← overlay para T6 (Sonatype Nexus)
 ├── run-test.sh                   ← orquestrador v2
 ├── lab/
 │   ├── verdaccio/config.yaml     ← registry local com uplink npmjs
@@ -80,8 +79,7 @@ CODE/
     ├── T3b-osv-scanner/
     ├── T3c-snyk/
     ├── T4-socket/
-    ├── T5-pnpm/
-    └── T6-sonatype/
+    └── T5-pnpm/
 ```
 
 ---
@@ -116,19 +114,6 @@ set -a; source .env; set +a   # carregar tokens antes de T3c e T4
 ./run-test.sh all
 ```
 
-### T6 — Sonatype (requer setup manual)
-
-```bash
-# Arrancar Nexus (demora ~3 minutos a iniciar)
-docker compose -f docker-compose.yml -f docker-compose.sonatype.yml up -d sonatype verdaccio exfil-server
-
-# Obter password inicial do admin
-docker exec $(docker compose -f docker-compose.yml -f docker-compose.sonatype.yml ps -q sonatype) \
-  cat /nexus-data/admin.password
-
-# Aceder ao UI em http://localhost:8081 e configurar proxy npm apontando para http://verdaccio:4873
-```
-
 ---
 
 ## Credenciais (`CODE/.env`)
@@ -140,7 +125,6 @@ Copiar `.env.example` para `.env` e preencher:
 | `SNYK_TOKEN` | [app.snyk.io](https://app.snyk.io) → Account Settings → Auth Token |
 | `SOCKET_TOKEN` | [socket.dev](https://socket.dev) → Settings → API Tokens |
 | `SOCKET_ORG` | slug da organização no URL do Socket.dev |
-| `SONATYPE_PASS` | definida ao configurar o Nexus pela primeira vez |
 
 ---
 
@@ -155,6 +139,5 @@ Copiar `.env.example` para `.env` e preencher:
 | T3c | Snyk | SCA reativo | **9 vulns** | não detectado (sem CVE) |
 | T4 | Socket.dev | Comportamental | detectado (npm público) | não detectado (registry privado) |
 | T5 | pnpm v10 | Arquitectural | instalado | **BLOQUEOU** — "Ignored build scripts" |
-| T6 | Sonatype Nexus OSS | Governança | não bloqueou | não bloqueou (OSS sem firewall) |
 
 Evidências completas em `evidence/`. Resumo detalhado em `evidence/lab-results.txt`.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # run-test.sh — Supply Chain Security Lab v2
-# Uso: ./run-test.sh [start|setup|archive|reset|T1|T2|T3a|T3b|T3c|T4|T5|T6|all]
+# Uso: ./run-test.sh [start|setup|archive|reset|T1|T2|T3a|T3b|T3c|T4|T5|all]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -318,17 +318,6 @@ EOF
   info "Evidências: evidence/T5-pnpm/"
 }
 
-# ─── T6: SONATYPE ─────────────────────────────────────────────────────────────
-
-t6() {
-  banner
-  header "T6 — Sonatype Nexus Repository OSS"
-  info "T6 requer configuração manual do proxy npm no UI do Nexus."
-  info "Arrancar: docker compose -f docker-compose.yml -f docker-compose.sonatype.yml up -d sonatype verdaccio exfil-server"
-  info "UI disponível em: http://localhost:8081"
-  info "Ver: .specs/features/lab-environment/2026-04-11-lab-implementation-plan.md (Task 12)"
-}
-
 # ─── ALL ──────────────────────────────────────────────────────────────────────
 
 all() {
@@ -343,7 +332,6 @@ all() {
   for dir in "$EVIDENCE"/T*/; do
     [ -d "$dir" ] && echo "  $(basename "$dir")"
   done
-  info "T6 (Sonatype) requer configuração manual — ver ./run-test.sh T6"
 }
 
 # ─── ROUTER ───────────────────────────────────────────────────────────────────
@@ -360,7 +348,6 @@ case "${1:-}" in
   T3c|t3c)      t3c ;;
   T4|t4)        t4 ;;
   T5|t5)        setup; t5 ;;
-  T6|t6)        t6 ;;
   all)          all ;;
   *)
     banner
@@ -380,7 +367,6 @@ case "${1:-}" in
     echo "    T3c       Snyk (requer SNYK_TOKEN no .env)"
     echo "    T4        Socket.dev (requer SOCKET_TOKEN + SOCKET_ORG no .env)"
     echo "    T5        pnpm v10 — bloqueio de lifecycle scripts"
-    echo "    T6        Sonatype Nexus OSS (configuração manual)"
     echo "    all       T1–T5 em sequência"
     echo
     exit 1
