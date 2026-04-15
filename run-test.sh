@@ -42,13 +42,12 @@ timer_end()   {
 }
 
 # ─── START ────────────────────────────────────────────────────────────────────
-
 start() {
   banner
   preflight
   header "START — A iniciar infra do lab"
   log "A arrancar verdaccio e exfil-server..."
-  docker compose up -d verdaccio exfil-server
+  docker compose up -d verdaccio exfil-server 
   sleep 3
   pass "Verdaccio e exfil-server a correr"
   info "Próximo passo: ./run-test.sh setup"
@@ -192,7 +191,9 @@ t3b() {
   header "T3b — OSV Scanner: SCA reativo (base Google OSV)"
   timer_start
   mkdir -p "$EVIDENCE/T3b-osv-scanner"
+  mkdir -p "$EVIDENCE/T3b-osv-sbom"
 
+  log "Passo 1/2 — OSV Scanner a ler package-lock.json directamente..."
   docker compose --profile analysis run --rm osv-scanner 2>&1 || true
 
   sep
@@ -205,12 +206,33 @@ results=d.get('results',[])
 total=sum(len(r.get('packages',[])) for r in results)
 print(total)
 " 2>/dev/null || echo "?")
-    pass "RESULTADO: relatório gerado — $vulns pacotes com findings"
+    pass "package-lock.json: $vulns pacotes com findings"
   else
-    info "RESULTADO: sem ficheiro JSON — sem vulnerabilidades ou erro"
+    info "package-lock.json: sem ficheiro JSON — sem vulnerabilidades ou erro"
   fi
+
+  log "Passo 2/2 — OSV Scanner a consumir SBOM gerado pelo Syft (pipeline Syft→OSV)..."
+  if [ ! -f "$EVIDENCE/T2-syft/sbom.json" ]; then
+    fail "SBOM não encontrado — corra T2 primeiro: ./run-test.sh T2"
+  else
+    docker compose --profile analysis run --rm osv-scanner-sbom 2>&1 || true
+    if [ -f "$EVIDENCE/T3b-osv-sbom/osv-scanner-sbom.json" ]; then
+      local vulns_sbom
+      vulns_sbom=$(python3 -c "
+import json,sys
+d=json.load(open('$EVIDENCE/T3b-osv-sbom/osv-scanner-sbom.json'))
+results=d.get('results',[])
+total=sum(len(r.get('packages',[])) for r in results)
+print(total)
+" 2>/dev/null || echo "?")
+      pass "SBOM (Syft→OSV): $vulns_sbom pacotes com findings — pipeline reutilizável confirmada"
+    else
+      info "SBOM: sem ficheiro JSON — verificar evidence/T3b-osv-sbom/"
+    fi
+  fi
+
   timer_end
-  info "Evidências: evidence/T3b-osv-scanner/"
+  info "Evidências: evidence/T3b-osv-scanner/ e evidence/T3b-osv-sbom/"
 }
 
 # ─── T3c: SNYK ────────────────────────────────────────────────────────────────

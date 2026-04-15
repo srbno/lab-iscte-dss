@@ -1,9 +1,11 @@
+name: lab-projeto-dss
+
 networks:
   lab-net:
     driver: bridge
-    internal: true  # sem saída para internet
+    internal: true # sem saída para internet
   public-net:
-    driver: bridge   # acesso à internet para serviços de setup que precisam do npmjs.org
+    driver: bridge # acesso à internet para serviços de setup que precisam do npmjs.org
 
 volumes:
   verdaccio-storage:
@@ -16,6 +18,8 @@ services:
     networks:
       - lab-net
       - public-net
+    ports:
+      - "4873:4873"
     volumes:
       - ./lab/verdaccio:/verdaccio/conf
       - verdaccio-storage:/verdaccio/storage
@@ -132,6 +136,20 @@ services:
     profiles:
       - analysis
 
+  osv-scanner-sbom:
+    image: ghcr.io/google/osv-scanner:latest
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: "0.5"
+    volumes:
+      - ./evidence/T2-syft:/sbom:ro
+      - ./evidence/T3b-osv-sbom:/evidence
+    entrypoint: ["sh", "-c"]
+    command: ["cp /sbom/sbom.json /tmp/sbom.cdx.json && /osv-scanner -L /tmp/sbom.cdx.json --format json --output-file /evidence/osv-scanner-sbom.json; /osv-scanner -L /tmp/sbom.cdx.json --format table --output-file /evidence/osv-scanner-sbom.txt; echo 'osv-scanner-sbom: done'"]
+    profiles:
+      - analysis
+
   snyk:
     image: snyk/snyk:node
     platform: linux/amd64
@@ -165,7 +183,7 @@ services:
       SOCKET_ORG: ${SOCKET_ORG:-}
     command: >
       sh -c "
-        npx --yes @socketsecurity/cli@latest scan create --no-interactive --json --tmp --org \"$$SOCKET_ORG\" . 2>&1 | tee /evidence/socket.txt;
+        npx --yes @socketsecurity/cli@latest scan create --no-interactive --json --org \"$$SOCKET_ORG\" . 2>&1 | tee /evidence/socket.txt;
         echo 'socket: done'
       "
     profiles:
