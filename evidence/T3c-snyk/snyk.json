@@ -226,7 +226,7 @@
       ],
       "description": "## Overview\n[lodash](https://www.npmjs.com/package/lodash) is a modern JavaScript utility library delivering modularity, performance, & extras.\n\nAffected versions of this package are vulnerable to Code Injection due the improper validation of `options.variable` key names in `_.template`. An attacker can execute arbitrary code at template compilation time by injecting malicious expressions. If `Object.prototype` has been polluted, inherited properties may also be copied into the imports object and executed.\n## PoC\n```js\r\nvar _ = require('lodash');\r\n\r\n_.template('', { variable: '){console.log(process.env)}; with(obj' })()\r\n```\n## Remediation\nUpgrade `lodash` to version 4.17.21 or higher.\n## References\n- [GitHub Commit](https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c)\n- [Vulnerable Code](https://github.com/lodash/lodash/blob/ddfd9b11a0126db2302cb70ec9973b66baec0975/lodash.js#L14851)\n- [Nuclei Templates](https://github.com/projectdiscovery/nuclei-templates/blob/main/http/cves/2021/CVE-2021-23337.yaml)\n",
       "epssDetails": {
-        "percentile": "0.88888",
+        "percentile": "0.88899",
         "probability": "0.04314",
         "modelVersion": "v2025.03.14"
       },
@@ -330,7 +330,7 @@
           "severity": "high",
           "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H",
           "cvssV3BaseScore": 8.2,
-          "modificationTime": "2026-04-12T02:23:21.916605Z"
+          "modificationTime": "2026-04-15T09:07:11.951190Z"
         },
         {
           "assigner": "SUSE",
@@ -375,7 +375,7 @@
           "severity": "high",
           "baseScore": 8.2,
           "cvssVersion": "3.1",
-          "modificationTime": "2026-04-12T02:23:21.916605Z"
+          "modificationTime": "2026-04-15T09:07:11.951190Z"
         },
         {
           "type": "secondary",
@@ -428,7 +428,7 @@
       "packageManager": "npm",
       "publicationTime": "2026-01-22T07:08:27.179012Z",
       "severityBasedOn": "CVSS",
-      "modificationTime": "2026-04-12T02:23:21.916605Z",
+      "modificationTime": "2026-04-15T09:07:11.951190Z",
       "socialTrendAlert": false,
       "severityWithCritical": "medium",
       "from": [
@@ -529,7 +529,7 @@
       ],
       "description": "## Overview\n[lodash](https://www.npmjs.com/package/lodash) is a modern JavaScript utility library delivering modularity, performance, & extras.\n\nAffected versions of this package are vulnerable to Prototype Pollution via the `_.unset` and `_.omit` functions. An attacker can delete properties from built-in prototypes by supplying array-wrapped path segments, potentially impacting application behaviour.\r\n\r\n**Notes:**\r\n\r\n1) Version 4.18.0 was intended to fix this vulnerability but it got deprecated due to introducing a breaking [functionality issue](https://github.com/lodash/lodash/issues/6167).\r\n\r\n2) This issue is due to incomplete fix for [CVE-2025-13465](https://security.snyk.io/vuln/SNYK-JS-LODASH-15053838) which protects only against string key members.\n\n## Details\n\nPrototype Pollution is a vulnerability affecting JavaScript. Prototype Pollution refers to the ability to inject properties into existing JavaScript language construct prototypes, such as objects. JavaScript allows all Object attributes to be altered, including their magical attributes such as `__proto__`, `constructor` and `prototype`. An attacker manipulates these attributes to overwrite, or pollute, a JavaScript application object prototype of the base object by injecting other values.  Properties on the `Object.prototype` are then inherited by all the JavaScript objects through the prototype chain. When that happens, this leads to either denial of service by triggering JavaScript exceptions, or it tampers with the application source code to force the code path that the attacker injects, thereby leading to remote code execution.\n\nThere are two main ways in which the pollution of prototypes occurs:\n\n-   Unsafe `Object` recursive merge\n    \n-   Property definition by path\n    \n\n### Unsafe Object recursive merge\n\nThe logic of a vulnerable recursive merge function follows the following high-level model:\n```\nmerge (target, source)\n\n  foreach property of source\n\n    if property exists and is an object on both the target and the source\n\n      merge(target[property], source[property])\n\n    else\n\n      target[property] = source[property]\n```\n<br>  \n\nWhen the source object contains a property named `__proto__` defined with `Object.defineProperty()` , the condition that checks if the property exists and is an object on both the target and the source passes and the merge recurses with the target, being the prototype of `Object` and the source of `Object` as defined by the attacker. Properties are then copied on the `Object` prototype.\n\nClone operations are a special sub-class of unsafe recursive merges, which occur when a recursive merge is conducted on an empty object: `merge({},source)`.\n\n`lodash` and `Hoek` are examples of libraries susceptible to recursive merge attacks.\n\n### Property definition by path\n\nThere are a few JavaScript libraries that use an API to define property values on an object based on a given path. The function that is generally affected contains this signature: `theFunction(object, path, value)`\n\nIf the attacker can control the value of “path”, they can set this value to `__proto__.myValue`. `myValue` is then assigned to the prototype of the class of the object.\n\n## Types of attacks\n\nThere are a few methods by which Prototype Pollution can be manipulated:\n\n| Type |Origin  |Short description |\n|--|--|--|\n| **Denial of service (DoS)**|Client  |This is the most likely attack. <br>DoS occurs when `Object` holds generic functions that are implicitly called for various operations (for example, `toString` and `valueOf`). <br> The attacker pollutes `Object.prototype.someattr` and alters its state to an unexpected value such as `Int` or `Object`. In this case, the code fails and is likely to cause a denial of service.  <br>**For example:** if an attacker pollutes `Object.prototype.toString` by defining it as an integer, if the codebase at any point was reliant on `someobject.toString()` it would fail. |\n |**Remote Code Execution**|Client|Remote code execution is generally only possible in cases where the codebase evaluates a specific attribute of an object, and then executes that evaluation.<br>**For example:** `eval(someobject.someattr)`. In this case, if the attacker pollutes `Object.prototype.someattr` they are likely to be able to leverage this in order to execute code.|\n|**Property Injection**|Client|The attacker pollutes properties that the codebase relies on for their informative value, including security properties such as cookies or tokens.<br>  **For example:** if a codebase checks privileges for `someuser.isAdmin`, then when the attacker pollutes `Object.prototype.isAdmin` and sets it to equal `true`, they can then achieve admin privileges.|\n\n## Affected environments\n\nThe following environments are susceptible to a Prototype Pollution attack:\n\n-   Application server\n    \n-   Web server\n\n-   Web browser\n    \n\n## How to prevent\n\n1.  Freeze the prototype— use `Object.freeze (Object.prototype)`.\n    \n2.  Require schema validation of JSON input.\n    \n3.  Avoid using unsafe recursive merge functions.\n    \n4.  Consider using objects without prototypes (for example, `Object.create(null)`), breaking the prototype chain and preventing pollution.\n    \n5.  As a best practice use `Map` instead of `Object`.\n\n### For more information on this vulnerability type:\n\n[Arteau, Olivier. “JavaScript prototype pollution attack in NodeJS application.” GitHub, 26 May 2018](https://github.com/HoLyVieR/prototype-pollution-nsec18/blob/master/paper/JavaScript_prototype_pollution_attack_in_NodeJS.pdf)\n\n## Remediation\nUpgrade `lodash` to version 4.18.1 or higher.\n## References\n- [GitHub Advisory](https://github.com/lodash/lodash/security/advisories/GHSA-f23m-r3pf-42rh)\n- [GitHub Commit](https://github.com/lodash/lodash/commit/fe8d32eda854377349a4f922ab7655c8e5df9a0b)\n- [GitHub Issue](https://github.com/lodash/lodash/issues/6167)\n",
       "epssDetails": {
-        "percentile": "0.21756",
+        "percentile": "0.21824",
         "probability": "0.00071",
         "modelVersion": "v2025.03.14"
       },
@@ -644,7 +644,7 @@
           "severity": "high",
           "cvssV3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
           "cvssV3BaseScore": 8.1,
-          "modificationTime": "2026-04-12T02:21:19.267543Z"
+          "modificationTime": "2026-04-15T09:07:51.547739Z"
         }
       ],
       "cvssSources": [
@@ -682,7 +682,7 @@
           "severity": "high",
           "baseScore": 8.1,
           "cvssVersion": "3.1",
-          "modificationTime": "2026-04-12T02:21:19.267543Z"
+          "modificationTime": "2026-04-15T09:07:51.547739Z"
         }
       ],
       "description": "## Overview\n[lodash](https://www.npmjs.com/package/lodash) is a modern JavaScript utility library delivering modularity, performance, & extras.\n\nAffected versions of this package are vulnerable to Arbitrary Code Injection due the improper validation of `options.imports` key names in `_.template`. An attacker can execute arbitrary code at template compilation time by injecting malicious expressions. If `Object.prototype` has been polluted, inherited properties may also be copied into the imports object and executed.\r\n\r\n**Notes:**\r\n\r\n1) Version 4.18.0 was intended to fix this vulnerability but it got deprecated due to introducing a breaking [functionality issue](https://github.com/lodash/lodash/issues/6167).\r\n\r\n2) This issue is due to the incomplete fix for [CVE-2021-23337](https://security.snyk.io/vuln/SNYK-JS-LODASH-1040724).\n## Remediation\nUpgrade `lodash` to version 4.18.1 or higher.\n## References\n- [GitHub Advisory](https://github.com/lodash/lodash/security/advisories/GHSA-r5fr-rjxr-66jc)\n- [GitHub Commit](https://github.com/lodash/lodash/commit/879aaa93132d78c2f8d20c60279da9f8b21576d6)\n- [GitHub Issue](https://github.com/lodash/lodash/issues/6167)\n- [OpenJS Security Advisory](https://cna.openjsf.org/security-advisories.html)\n",
@@ -726,7 +726,7 @@
       "packageManager": "npm",
       "publicationTime": "2026-04-01T10:32:00.027414Z",
       "severityBasedOn": "CVSS",
-      "modificationTime": "2026-04-12T02:21:19.267543Z",
+      "modificationTime": "2026-04-15T09:07:51.547739Z",
       "socialTrendAlert": false,
       "severityWithCritical": "high",
       "from": [

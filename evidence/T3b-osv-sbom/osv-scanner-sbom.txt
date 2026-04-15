@@ -1,0 +1,15 @@
+
+Total 1 package affected by 7 known vulnerabilities (1 Critical, 3 High, 3 Medium, 0 Low, 0 Unknown) from 1 ecosystem.
+7 vulnerabilities can be fixed.
+
++-------------------------------------+------+-----------+---------+---------+---------------+-------------------+
+| OSV URL                             | CVSS | ECOSYSTEM | PACKAGE | VERSION | FIXED VERSION | SOURCE            |
++-------------------------------------+------+-----------+---------+---------+---------------+-------------------+
+| https://osv.dev/GHSA-29mw-wpgm-hmr9 | 5.3  | npm       | lodash  | 4.17.11 | 4.17.21       | tmp/sbom.cdx.json |
+| https://osv.dev/GHSA-35jh-r3h4-6jhm | 7.2  | npm       | lodash  | 4.17.11 | 4.17.21       | tmp/sbom.cdx.json |
+| https://osv.dev/GHSA-f23m-r3pf-42rh | 6.5  | npm       | lodash  | 4.17.11 | 4.18.0        | tmp/sbom.cdx.json |
+| https://osv.dev/GHSA-jf85-cpcp-j695 | 9.1  | npm       | lodash  | 4.17.11 | 4.17.12       | tmp/sbom.cdx.json |
+| https://osv.dev/GHSA-p6mc-m468-83gw | 7.4  | npm       | lodash  | 4.17.11 | 4.17.19       | tmp/sbom.cdx.json |
+| https://osv.dev/GHSA-r5fr-rjxr-66jc | 8.1  | npm       | lodash  | 4.17.11 | 4.18.0        | tmp/sbom.cdx.json |
+| https://osv.dev/GHSA-xxjr-mmjv-4gpg | 6.9  | npm       | lodash  | 4.17.11 | 4.17.23       | tmp/sbom.cdx.json |
++-------------------------------------+------+-----------+---------+---------+---------------+-------------------+

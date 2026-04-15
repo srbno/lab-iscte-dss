@@ -1,21 +1,21 @@
 (node:27) MaxListenersExceededWarning: Possible EventTarget memory leak detected. 11 abort listeners added to [AbortSignal]. MaxListeners is 10. Use events.setMaxListeners() to increase limit
 (Use `node --trace-warnings ...` to show where the warning was created)
-⠋ Requesting supported scan file types from API...
-⠙ 
-✔ Received Socket API response (after requesting supported scan file types).
-⠙ Searching for local files to include in scan...
-⠙ 
-✔ Found 2 files to include in scan.
-✔ Found 2 local files
-✔ Received Socket API response (after requesting to create a scan).
-⠹ 
-⠹ 
+[36m⠋[39m Requesting supported scan file types from API...
+[36m⠙[39m 
+[32m✔[39m Received Socket API response (after requesting supported scan file types).
+[36m⠙[39m Searching for local files to include in scan...
+[36m⠙[39m 
+[32m✔[39m Found 2 files to include in scan.
+[32m✔[39m Found 2 local files
+[32m✔[39m Received Socket API response (after requesting to create a scan).
+[36m⠹[39m 
+[36m⠹[39m 
 {
   "ok": true,
   "data": {
-    "id": "472518f2-f436-4b93-ac8e-755519d44065",
-    "created_at": "2026-04-12T16:06:34.499Z",
-    "updated_at": "2026-04-12T16:06:34.499Z",
+    "id": "419b260a-1f62-43a6-a13f-b3de0560feae",
+    "created_at": "2026-04-15T22:56:49.271Z",
+    "updated_at": "2026-04-15T22:56:49.271Z",
     "organization_id": "359670",
     "repository_id": "c1bfaf1a-5494-4560-a276-1771f4fb120b",
     "branch": "socket-default-branch",
@@ -23,7 +23,7 @@
     "commit_hash": "",
     "pull_request": 0,
     "committers": [],
-    "html_report_url": "https://socket.dev/dashboard/org/iscte-lab/sbom/472518f2-f436-4b93-ac8e-755519d44065",
+    "html_report_url": "https://socket.dev/dashboard/org/iscte-lab/sbom/419b260a-1f62-43a6-a13f-b3de0560feae",
     "scan_type": "socket",
     "unmatchedFiles": []
   }
