@@ -10,6 +10,10 @@ on:
       - 'prototype/**'
   workflow_dispatch:   # permite execução manual (útil para demos)
 
+permissions:
+  contents: read
+  issues: write   # necessário para criar/comentar issues de alerta
+
 jobs:
   security-scan:
     name: Dependency Security Scan
@@ -70,31 +74,100 @@ jobs:
           output-file: sbom.cdx.json
           artifact-name: sbom-voip-manager
 
-      # ── Alerta por email ──────────────────────────────────────────────────
-      # Enviado apenas se o OSV Scanner encontrar vulnerabilidades.
-      # Configura os secrets MAIL_USERNAME, MAIL_PASSWORD e MAIL_TO
-      # em Settings → Secrets and variables → Actions do repositório.
-      - name: Send email alert
+      # ── Job Summary (sempre visível no separador Actions) ─────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ "$VULN_FOUND" = "1" ]; then
+            STATUS="🔴 Vulnerabilidades detectadas"
+            VULN_LIST=$(jq -r '
+              .results[]?.packages[]? |
+              .package.name + "@" + .package.version + ": " +
+              ([.vulnerabilities[]?.id] | join(", "))
+            ' osv-report.json 2>/dev/null || echo "Ver osv-report.json para detalhes")
+          else
+            STATUS="🟢 Nenhuma vulnerabilidade conhecida"
+            VULN_LIST=""
+          fi
+
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Security Pipeline — Resultado
+
+          | | |
+          |---|---|
+          | **Estado** | ${STATUS} |
+          | **Branch** | \`${{ github.ref_name }}\` |
+          | **Commit** | \`${{ github.sha }}\` |
+
+          ### Camadas executadas
+          - ✅ **Prevenção** — \`pnpm install --ignore-scripts\` (lifecycle scripts bloqueados)
+          - $([ "$VULN_FOUND" = "1" ] && echo "🔴" || echo "✅") **Detecção** — OSV Scanner
+          - ✅ **Inventário** — SBOM CycloneDX gerado (artefacto: \`sbom-voip-manager\`)
+
+          $([ -n "$VULN_LIST" ] && echo "### Vulnerabilidades encontradas
+          \`\`\`
+          ${VULN_LIST}
+          \`\`\`")
+          EOF
+
+      # ── Alerta via GitHub Issue ───────────────────────────────────────────
+      # Se CVEs detectados: cria uma issue ou adiciona comentário à issue
+      # existente (evita duplicados). Usa GITHUB_TOKEN automático — sem setup.
+      - name: Create or update security alert issue
         if: env.VULN_FOUND == '1'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "[ALERTA] CVEs detectados em voip-manager-api — ${{ github.ref_name }}"
-          to: ${{ secrets.MAIL_TO }}
-          from: Security Pipeline <${{ secrets.MAIL_USERNAME }}>
-          body: |
-            A pipeline de segurança detectou vulnerabilidades nas dependências de voip-manager-api.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABEL="security-alert"
 
-            Repositório : ${{ github.repository }}
-            Branch      : ${{ github.ref_name }}
-            Commit      : ${{ github.sha }}
+          # Garantir que a label existe
+          gh label create "$LABEL" \
+            --color "d93f0b" \
+            --description "Dependência vulnerável detectada pela pipeline de segurança" \
+            2>/dev/null || true
 
-            Consultar o relatório OSV completo e o SBOM nos artefactos do run:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Extrair lista de CVEs do relatório OSV
+          VULN_SUMMARY=$(jq -r '
+            .results[]?.packages[]? |
+            "- **" + .package.name + "@" + .package.version + "**: " +
+            ([.vulnerabilities[]?.id] | join(", "))
+          ' osv-report.json 2>/dev/null || echo "- Ver artefacto osv-report para detalhes")
 
-            Recomendação: actualizar lodash para a versão mais recente (>= 4.17.21).
+          BODY="## Vulnerabilidades detectadas pela pipeline de segurança
 
-            -- VoIP Manager Security Pipeline
+          **Branch:** \`${{ github.ref_name }}\`
+          **Commit:** \`${{ github.sha }}\`
+          **Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ### Dependências afectadas
+
+          ${VULN_SUMMARY}
+
+          ### Recomendação
+
+          Actualizar as dependências vulneráveis para versões corrigidas e fechar esta issue."
+
+          # Verificar se já existe issue aberta com esta label
+          EXISTING=$(gh issue list \
+            --label "$LABEL" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            # Adicionar comentário à issue existente
+            gh issue comment "$EXISTING" --body \
+              "### Nova detecção — \`${{ github.ref_name }}\` @ \`$(echo ${{ github.sha }} | cut -c1-7)\`
+
+          ${VULN_SUMMARY}
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Comentário adicionado à issue #${EXISTING}"
+          else
+            # Criar nova issue
+            gh issue create \
+              --title "[Security] CVEs detectados em voip-manager-api" \
+              --body "$BODY" \
+              --label "$LABEL"
+            echo "Issue de segurança criada"
+          fi
