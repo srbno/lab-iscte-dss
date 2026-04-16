@@ -59,27 +59,42 @@ Versão com múltiplos CVEs de prototype pollution e code injection. Incluída p
 
 ## Estrutura de directórios
 
+Este repositório tem três camadas distintas:
+
+| Directório | O que é |
+|-----------|---------|
+| `lab/` | **Implementação** — cenário de ataque (test-app, verdaccio, exfil-server) |
+| `evidence/` | **Resultados** — output das ferramentas T1–T6 |
+| `prototype/` | **Protótipo** — pipeline de segurança PME recomendada (VoIP Manager API + GitHub Actions + Dependency-Track) |
+| `.github/workflows/` | **CI/CD** — pipeline real que corre em cada push a `prototype/` |
+
 ```
 CODE/
+├── .github/
+│   └── workflows/
+│       └── security-pipeline.yml ← CI/CD: pnpm + OSV + Syft + email alert
 ├── .env.example                  ← template de credenciais (sem valores)
 ├── .env                          ← credenciais reais (não commitado)
-├── docker-compose.yml            ← infra principal + ferramentas de análise
-├── run-test.sh                   ← orquestrador v2
-├── lab/
+├── docker-compose.yml            ← infra do lab + ferramentas de análise
+├── run-test.sh                   ← orquestrador dos testes T1–T6
+├── lab/                          ← IMPLEMENTAÇÃO (cenário de ataque)
 │   ├── verdaccio/config.yaml     ← registry local com uplink npmjs
 │   ├── supply-chain-demo/        ← pacote malicioso demo
 │   ├── test-app/                 ← aplicação Express alvo (deps: demo + lodash)
 │   └── exfil-server/             ← servidor que regista dados exfiltrados
-└── evidence/
-    ├── lab-results.txt           ← resumo completo dos testes v2
-    ├── archive/                  ← evidências v1 arquivadas (não commitadas)
-    ├── T1-baseline/
-    ├── T2-syft/
-    ├── T3a-npm-audit/
-    ├── T3b-osv-scanner/
-    ├── T3c-snyk/
-    ├── T4-socket/
-    └── T5-pnpm/
+├── evidence/                     ← RESULTADOS dos testes T1–T6
+│   ├── T1-baseline/
+│   ├── T2-syft/
+│   ├── T3a-npm-audit/
+│   ├── T3b-osv-scanner/
+│   ├── T3c-snyk/
+│   ├── T4-socket/
+│   ├── T5-pnpm/
+│   └── T6-dependencytrack/
+└── prototype/                    ← PROTÓTIPO (pipeline PME recomendada)
+    ├── app/                      ← VoIP Manager API (Express + SQLite + JWT)
+    ├── docker-compose.yml        ← Dependency-Track (monitorização contínua)
+    └── README.md                 ← como usar o protótipo
 ```
 
 ---

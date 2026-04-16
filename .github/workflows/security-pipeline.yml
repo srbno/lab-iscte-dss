@@ -1,0 +1,100 @@
+name: Security Pipeline
+
+# Corre em qualquer branch, mas apenas quando prototype/ é alterado
+on:
+  push:
+    paths:
+      - 'prototype/**'
+  pull_request:
+    paths:
+      - 'prototype/**'
+  workflow_dispatch:   # permite execução manual (útil para demos)
+
+jobs:
+  security-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Camada 1: Prevenção ────────────────────────────────────────────────
+      # pnpm v10 bloqueia lifecycle scripts por omissão (--ignore-scripts).
+      # Um postinstall malicioso (como o demonstrado no lab) não seria executado.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: prototype/app/pnpm-lock.yaml
+
+      - name: Install dependencies (lifecycle scripts blocked)
+        working-directory: prototype/app
+        run: pnpm install --ignore-scripts
+
+      # ── Camada 2: Detecção reactiva ───────────────────────────────────────
+      # OSV Scanner verifica o lockfile contra a base de dados OSV (Google).
+      # lodash@4.17.11 tem 7 CVEs conhecidos — esta etapa vai detectá-los.
+      - name: Run OSV Scanner
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            ghcr.io/google/osv-scanner:latest \
+            --lockfile /workspace/prototype/app/pnpm-lock.yaml \
+            --format json \
+            > osv-report.json 2>&1 \
+          && echo "VULN_FOUND=0" >> $GITHUB_ENV \
+          || echo "VULN_FOUND=1" >> $GITHUB_ENV
+
+      - name: Upload OSV report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-report
+          path: osv-report.json
+
+      # ── Camada 3: Inventário (SBOM) ───────────────────────────────────────
+      # Syft gera um SBOM CycloneDX com todos os componentes.
+      # O SBOM pode ser carregado no Dependency-Track para monitorização contínua.
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          path: prototype/app
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          artifact-name: sbom-voip-manager
+
+      # ── Alerta por email ──────────────────────────────────────────────────
+      # Enviado apenas se o OSV Scanner encontrar vulnerabilidades.
+      # Configura os secrets MAIL_USERNAME, MAIL_PASSWORD e MAIL_TO
+      # em Settings → Secrets and variables → Actions do repositório.
+      - name: Send email alert
+        if: env.VULN_FOUND == '1'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "[ALERTA] CVEs detectados em voip-manager-api — ${{ github.ref_name }}"
+          to: ${{ secrets.MAIL_TO }}
+          from: Security Pipeline <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            A pipeline de segurança detectou vulnerabilidades nas dependências de voip-manager-api.
+
+            Repositório : ${{ github.repository }}
+            Branch      : ${{ github.ref_name }}
+            Commit      : ${{ github.sha }}
+
+            Consultar o relatório OSV completo e o SBOM nos artefactos do run:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Recomendação: actualizar lodash para a versão mais recente (>= 4.17.21).
+
+            -- VoIP Manager Security Pipeline
