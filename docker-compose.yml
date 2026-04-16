@@ -9,6 +9,7 @@ networks:
 
 volumes:
   verdaccio-storage:
+  dependencytrack-data:
 
 services:
   # ─── LAB INFRASTRUCTURE (lab-net, sem internet) ───────────────────────────
@@ -188,3 +189,27 @@ services:
       "
     profiles:
       - analysis
+
+  # ─── T6: DEPENDENCY-TRACK (monitorização contínua de SBOM) ───────────────────
+
+  dependencytrack:
+    image: dependencytrack/bundled:4.13.6
+    networks:
+      - public-net
+    ports:
+      - "8080:8080"
+    volumes:
+      - dependencytrack-data:/data
+    environment:
+      ALPINE_ADMIN_PASSWORD: ${DT_ADMIN_PASSWORD}
+      JAVA_TOOL_OPTIONS: "-Xmx4G"
+    mem_limit: 5g
+    cpus: "2.0"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    profiles:
+      - dependencytrack

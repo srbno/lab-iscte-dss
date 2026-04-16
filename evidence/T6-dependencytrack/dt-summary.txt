@@ -1,0 +1,13 @@
+=== Dependency-Track — Findings ===
+Total de findings : 7
+  CRITICAL  : 2
+  HIGH      : 2
+  MEDIUM    : 3
+lodash findings   : 7
+supply-chain-demo : 0 (sem CVE registado — esperado)
+
+=== Métricas do projecto ===
+Componentes       : 72
+Vulneráveis       : 1
+Findings total    : ?
+Suprimidos        : 0
