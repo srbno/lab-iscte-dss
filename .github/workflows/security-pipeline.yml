@@ -56,6 +56,40 @@ jobs:
           && echo "VULN_FOUND=0" >> $GITHUB_ENV \
           || echo "VULN_FOUND=1" >> $GITHUB_ENV
 
+      # ── Gerar tabela estruturada de vulnerabilidades ──────────────────────
+      # Extrai do JSON: pacote, versão, GHSA, CVE, CVSS, severidade,
+      # descrição e versão corrigida. Escrito em ficheiro para reutilização
+      # no Job Summary e na Issue sem duplicar a query jq.
+      - name: Build vulnerability table
+        if: env.VULN_FOUND == '1'
+        run: |
+          jq -r '
+            .results[].packages[] |
+            . as $pkg |
+            .groups[] |
+            . as $grp |
+            ($pkg.vulnerabilities[] | select(.id == $grp.ids[0])) as $vuln |
+            (($grp.max_severity // "0") | tonumber) as $score |
+            (if $score >= 9.0 then "🔴 CRITICAL"
+             elif $score >= 7.0 then "🟠 HIGH"
+             elif $score >= 4.0 then "🟡 MEDIUM"
+             else "🟢 LOW" end) as $sev |
+            [
+              $pkg.package.name + "@" + $pkg.package.version,
+              ("[" + $grp.ids[0] + "](https://osv.dev/" + $grp.ids[0] + ")"),
+              ([$grp.aliases[] | select(startswith("CVE-"))] | first // "—"),
+              (($grp.max_severity // "—") + " " + $sev),
+              ($vuln.summary // "—"),
+              ([$vuln.affected[].ranges[].events[] | select(has("fixed")) | .fixed] | first // "—")
+            ] | "| " + join(" | ") + " |"
+          ' osv-report.json > vuln-rows.txt 2>/dev/null || echo "| — | — | — | — | Erro ao processar JSON | — |" > vuln-rows.txt
+
+          {
+            echo "| Pacote | GHSA | CVE | CVSS / Severidade | Descrição | Versão corrigida |"
+            echo "|--------|------|-----|-------------------|-----------|-----------------|"
+            cat vuln-rows.txt
+          } > vuln-table.md
+
       - name: Upload OSV report
         if: always()
         uses: actions/upload-artifact@v4
@@ -80,35 +114,30 @@ jobs:
         run: |
           if [ "$VULN_FOUND" = "1" ]; then
             STATUS="🔴 Vulnerabilidades detectadas"
-            VULN_LIST=$(jq -r '
-              .results[]?.packages[]? |
-              .package.name + "@" + .package.version + ": " +
-              ([.vulnerabilities[]?.id] | join(", "))
-            ' osv-report.json 2>/dev/null || echo "Ver osv-report.json para detalhes")
           else
             STATUS="🟢 Nenhuma vulnerabilidade conhecida"
-            VULN_LIST=""
           fi
 
-          cat >> $GITHUB_STEP_SUMMARY << EOF
-          ## Security Pipeline — Resultado
-
-          | | |
-          |---|---|
-          | **Estado** | ${STATUS} |
-          | **Branch** | \`${{ github.ref_name }}\` |
-          | **Commit** | \`${{ github.sha }}\` |
-
-          ### Camadas executadas
-          - ✅ **Prevenção** — \`pnpm install --ignore-scripts\` (lifecycle scripts bloqueados)
-          - $([ "$VULN_FOUND" = "1" ] && echo "🔴" || echo "✅") **Detecção** — OSV Scanner
-          - ✅ **Inventário** — SBOM CycloneDX gerado (artefacto: \`sbom-voip-manager\`)
-
-          $([ -n "$VULN_LIST" ] && echo "### Vulnerabilidades encontradas
-          \`\`\`
-          ${VULN_LIST}
-          \`\`\`")
-          EOF
+          {
+            echo "## Security Pipeline — Resultado"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Estado** | ${STATUS} |"
+            echo "| **Branch** | \`${{ github.ref_name }}\` |"
+            echo "| **Commit** | \`${{ github.sha }}\` |"
+            echo ""
+            echo "### Camadas executadas"
+            echo "- ✅ **Prevenção** — \`pnpm install --ignore-scripts\` (lifecycle scripts bloqueados)"
+            echo "- $([ "$VULN_FOUND" = "1" ] && echo "🔴" || echo "✅") **Detecção** — OSV Scanner"
+            echo "- ✅ **Inventário** — SBOM CycloneDX gerado (artefacto: \`sbom-voip-manager\`)"
+            if [ "$VULN_FOUND" = "1" ] && [ -f vuln-table.md ]; then
+              echo ""
+              echo "### Vulnerabilidades encontradas"
+              echo ""
+              cat vuln-table.md
+            fi
+          } >> $GITHUB_STEP_SUMMARY
 
       # ── Alerta via GitHub Issue ───────────────────────────────────────────
       # Se CVEs detectados: cria uma issue ou adiciona comentário à issue
@@ -126,12 +155,7 @@ jobs:
             --description "Dependência vulnerável detectada pela pipeline de segurança" \
             2>/dev/null || true
 
-          # Extrair lista de CVEs do relatório OSV
-          VULN_SUMMARY=$(jq -r '
-            .results[]?.packages[]? |
-            "- **" + .package.name + "@" + .package.version + "**: " +
-            ([.vulnerabilities[]?.id] | join(", "))
-          ' osv-report.json 2>/dev/null || echo "- Ver artefacto osv-report para detalhes")
+          VULN_TABLE=$(cat vuln-table.md 2>/dev/null || echo "Ver artefacto osv-report para detalhes.")
 
           BODY="## Vulnerabilidades detectadas pela pipeline de segurança
 
@@ -141,11 +165,11 @@ jobs:
 
           ### Dependências afectadas
 
-          ${VULN_SUMMARY}
+          ${VULN_TABLE}
 
           ### Recomendação
 
-          Actualizar as dependências vulneráveis para versões corrigidas e fechar esta issue."
+          Actualizar as dependências para as versões corrigidas indicadas na tabela e fechar esta issue."
 
           # Verificar se já existe issue aberta com esta label
           EXISTING=$(gh issue list \
@@ -157,9 +181,9 @@ jobs:
           if [ -n "$EXISTING" ]; then
             # Adicionar comentário à issue existente
             gh issue comment "$EXISTING" --body \
-              "### Nova detecção — \`${{ github.ref_name }}\` @ \`$(echo ${{ github.sha }} | cut -c1-7)\`
+              "### Nova detecção — \`${{ github.ref_name }}\` @ \`$(echo "${{ github.sha }}" | cut -c1-7)\`
 
-          ${VULN_SUMMARY}
+          ${VULN_TABLE}
 
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             echo "Comentário adicionado à issue #${EXISTING}"
