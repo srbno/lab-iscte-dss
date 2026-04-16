@@ -52,7 +52,7 @@ jobs:
             ghcr.io/google/osv-scanner:latest \
             --lockfile /workspace/prototype/app/pnpm-lock.yaml \
             --format json \
-            > osv-report.json 2>&1 \
+            --output-file /workspace/osv-report.json \
           && echo "VULN_FOUND=0" >> $GITHUB_ENV \
           || echo "VULN_FOUND=1" >> $GITHUB_ENV
 
@@ -171,3 +171,12 @@ jobs:
               --label "$LABEL"
             echo "Issue de segurança criada"
           fi
+
+      # ── Falha explícita do job — ÚLTIMO PASSO ────────────────────────────
+      # Corre depois da issue criada. O job termina vermelho — visível
+      # imediatamente na lista de runs e nas notificações do GitHub.
+      - name: Fail pipeline if vulnerabilities found
+        if: env.VULN_FOUND == '1'
+        run: |
+          echo "::error::CVEs detectados — ver issue de segurança aberta neste repositório"
+          exit 1
