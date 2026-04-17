@@ -1,158 +1,217 @@
-# Lab — Gestão Segura de Dependências de Software
+# Gestão Segura de Dependências de Software — Componente Prática
 
-Componente prático do trabalho "Gestão Segura de Dependências de Software: Análise de Práticas, Ferramentas e Falhas no Ecossistema NPM" (MEI ISCTE, Desenvolvimento de Código Seguro, 2025/2026).
+Trabalho final da UC Desenvolvimento de Código Seguro — MEI ISCTE, 2025/2026.
 
-O laboratório demonstra empiricamente dois tipos de ameaça de supply chain e avalia o comportamento de seis ferramentas de segurança face a cada uma:
-
-| Ameaça | Pacote | Detecção esperada |
-|--------|--------|-------------------|
-| Zero-day comportamental | `@demo-lab/supply-chain-demo@1.0.0` — `postinstall` exfiltra `process.env` | Apenas ferramentas comportamentais |
-| CVE conhecido | `lodash@4.17.11` — prototype pollution (7 GHSAs, CVSS 9.1) | Ferramentas SCA reativas |
+> **"Gestão Segura de Dependências de Software: Análise de Práticas, Ferramentas e Falhas no Ecossistema NPM"**
 
 ---
 
-## Pré-requisitos
+## Guia do Projeto
 
-- Docker Desktop em execução
-- `CODE/.env` preenchido a partir de `CODE/.env.example` (ver secção Credenciais)
+Este repositório tem **três componentes distintos**, que em conjunto demonstram o ciclo completo: ataque → detecção → resposta.
 
-Nada é instalado no sistema operativo do utilizador — todas as ferramentas correm em containers.
+| Componente    | Directório           | O que demonstra                                                                  |
+| ------------- | -------------------- | -------------------------------------------------------------------------------- |
+| **Lab**       | `lab/` + `evidence/` | Cenário de ataque controlado e avaliação de 6 ferramentas de segurança (T1–T6)   |
+| **Protótipo** | `prototype/`         | Pipeline de segurança integrada recomendada para uma PME (VoIP Manager API)      |
+| **CI/CD**     | `.github/workflows/` | Pipeline GitHub Actions real — detecta CVEs, cria Issue de alerta, falha o build |
+
+### Como avaliar cada componente
+
+**1. Lab (resultados já disponíveis — não requer execução)**
+Os resultados de todos os testes estão em `evidence/`. Para cada ferramenta existe um directório com o output original capturado. Consultar directamente sem necessidade de correr Docker.
+
+**2. Protótipo — pipeline em funcionamento no GitHub**
+Ir ao separador **[Actions](../../actions)** deste repositório:
+- Branch `main` → ver runs anteriores com pipeline **vermelha** (CVEs detectados em `lodash@4.17.11`)
+- Branch `fix-test` → ver run com pipeline **verde** (dependências corrigidas, zero CVEs)
+- Separador **[Issues](../../issues)** → ver issue de alerta criada automaticamente com tabela estruturada de vulnerabilidades
+
+**3. Protótipo — correr localmente (opcional)**
+Ver secção [Como correr o protótipo](#como-correr-o-protótipo) abaixo.
 
 ---
 
-## Arquitectura
+## O Laboratório
+
+### O que demonstra
+
+O lab confronta duas ameaças de supply chain com seis ferramentas de segurança:
+
+| Ameaça                  | Pacote                              | Natureza                                                          |
+| ----------------------- | ----------------------------------- | ----------------------------------------------------------------- |
+| Zero-day comportamental | `@demo-lab/supply-chain-demo@1.0.0` | `postinstall` exfiltra `process.env` via HTTP — sem CVE registado |
+| CVE conhecido           | `lodash@4.17.11`                    | Prototype pollution / code injection — 7 GHSAs, CVSS 9.1          |
+
+### Resultados
+
+| Teste | Ferramenta             | Paradigma              |       lodash@4.17.11       |           Ataque postinstall           |
+| ----- | ---------------------- | ---------------------- | :------------------------: | :------------------------------------: |
+| T1    | Baseline (npm install) | —                      |         instalado          | **EXECUTOU** — credenciais exfiltradas |
+| T2    | Syft                   | SBOM                   |        inventariado        |       inventariado (sem alerta)        |
+| T3a   | npm audit              | SCA reactivo           |   **detectado** (7 CVEs)   |        não detectado (sem CVE)         |
+| T3b   | OSV Scanner            | SCA reactivo           |   **detectado** (7 CVEs)   |        não detectado (sem CVE)         |
+| T3c   | Snyk                   | SCA reactivo           | **detectado** (9 findings) |        não detectado (sem CVE)         |
+| T4    | Socket.dev             | Comportamental         |  detectado (npm público)   |    não detectado (registry privado)    |
+| T5    | pnpm v10               | Arquitectural          |         instalado          |              **BLOQUEOU**              |
+| T6    | Dependency-Track       | Monitorização contínua |  **7 CVEs** (2 CRITICAL)   |    0 findings (sem CVE — esperado)     |
+
+**Conclusão central:** ferramentas SCA reactivas detectam CVEs conhecidos mas são cegas a zero-days comportamentais. Apenas o pnpm v10 (prevenção arquitectural) bloqueou o ataque. O Dependency-Track fecha o ciclo com monitorização contínua sem re-scanning.
+
+Evidências completas em `evidence/` — um directório por teste com o output original das ferramentas.
+
+### Arquitectura do lab
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  lab-net (internal: true — sem acesso directo à net)│
-│                                                     │
-│  ┌──────────┐   ┌──────────┐   ┌────────────────┐  │
-│  │ verdaccio│   │ test-app │   │  exfil-server  │  │
-│  │  :4873   │   │ Express  │   │     :9999      │  │
-│  └──────────┘   └──────────┘   └────────────────┘  │
-│   registry       instala as       recebe POSTs      │
-│   local +        dependências     do postinstall    │
-│   proxy npmjs    (demo+lodash)                      │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│  lab-net (internal — sem saída para internet)        │
+│                                                      │
+│  ┌──────────┐   ┌──────────┐   ┌────────────────┐   │
+│  │ verdaccio│   │ test-app │   │  exfil-server  │   │
+│  │  :4873   │   │ Express  │   │     :9999      │   │
+│  └──────────┘   └──────────┘   └────────────────┘   │
+│   registry local  instala deps   regista dados       │
+│   + proxy npmjs   (demo+lodash)  exfiltrados         │
+└──────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────┐
-│  rede Docker padrão (com internet)                  │
-│                                                     │
-│  syft │ npm-audit │ osv-scanner │ snyk │ socket-cli │
-│       (montam lab/test-app como volume read-only)   │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│  public-net (com internet)                           │
+│  syft │ npm-audit │ osv-scanner │ snyk │ socket-cli  │
+│  (montam lab/test-app como volume read-only)         │
+└──────────────────────────────────────────────────────┘
 ```
 
-**Cenário simulado:** uma PME sem registry privado. O Verdaccio representa o npmjs.com onde um pacote comprometido foi publicado. O `test-app` representa o ambiente de desenvolvimento ou CI/CD da empresa. O Verdaccio serve o pacote demo localmente e faz proxy de pacotes públicos (lodash, express) via uplink npmjs.
-
----
-
-## Pacotes do test-app
-
-**`@demo-lab/supply-chain-demo@1.0.0`** (`lab/supply-chain-demo/`)
-O script `postinstall` simula um ataque de supply chain real: explora o ambiente de forma cega (sem conhecer os nomes das variáveis) e envia `process.env` completo por HTTP POST para o `exfil-server`. O `test-app` tem variáveis de ambiente fake que representam os tipos de credenciais visadas por ataques reais (AWS keys, tokens de CI/CD, URLs de base de dados).
-
-**`lodash@4.17.11`** (npm público, via proxy Verdaccio→npmjs)
-Versão com múltiplos CVEs de prototype pollution e code injection. Incluída para que as ferramentas SCA reativas tenham algo a detectar, criando o contraste central do lab.
-
----
-
-## Estrutura de directórios
-
-Este repositório tem três camadas distintas:
-
-| Directório | O que é |
-|-----------|---------|
-| `lab/` | **Implementação** — cenário de ataque (test-app, verdaccio, exfil-server) |
-| `evidence/` | **Resultados** — output das ferramentas T1–T6 |
-| `prototype/` | **Protótipo** — pipeline de segurança PME recomendada (VoIP Manager API + GitHub Actions + Dependency-Track) |
-| `.github/workflows/` | **CI/CD** — pipeline real que corre em cada push a `prototype/` |
-
-```
-CODE/
-├── .github/
-│   └── workflows/
-│       └── security-pipeline.yml ← CI/CD: pnpm + OSV + Syft + email alert
-├── .env.example                  ← template de credenciais (sem valores)
-├── .env                          ← credenciais reais (não commitado)
-├── docker-compose.yml            ← infra do lab + ferramentas de análise
-├── run-test.sh                   ← orquestrador dos testes T1–T6
-├── lab/                          ← IMPLEMENTAÇÃO (cenário de ataque)
-│   ├── verdaccio/config.yaml     ← registry local com uplink npmjs
-│   ├── supply-chain-demo/        ← pacote malicioso demo
-│   ├── test-app/                 ← aplicação Express alvo (deps: demo + lodash)
-│   └── exfil-server/             ← servidor que regista dados exfiltrados
-├── evidence/                     ← RESULTADOS dos testes T1–T6
-│   ├── T1-baseline/
-│   ├── T2-syft/
-│   ├── T3a-npm-audit/
-│   ├── T3b-osv-scanner/
-│   ├── T3c-snyk/
-│   ├── T4-socket/
-│   ├── T5-pnpm/
-│   └── T6-dependencytrack/
-└── prototype/                    ← PROTÓTIPO (pipeline PME recomendada)
-    ├── app/                      ← VoIP Manager API (Express + SQLite + JWT)
-    ├── docker-compose.yml        ← Dependency-Track (monitorização contínua)
-    └── README.md                 ← como usar o protótipo
-```
-
----
-
-## Como correr
-
-### Gestão da infra
+### Como correr o lab (requer Docker Desktop)
 
 ```bash
-./run-test.sh start      # arranca verdaccio e exfil-server
-./run-test.sh setup      # publica pacote demo no Verdaccio (obrigatório antes de T1/T5)
-./run-test.sh archive    # arquiva evidências actuais → evidence/archive/TIMESTAMP/
-./run-test.sh reset      # docker compose down --volumes --remove-orphans
-```
+# Pré-requisito: copiar credenciais
+cp .env.example .env   # preencher SNYK_TOKEN, SOCKET_TOKEN, SOCKET_ORG, DT_ADMIN_PASSWORD
 
-### Executar um teste individual
+# Arrancar infra e publicar pacote demo
+./run-test.sh setup
 
-```bash
-./run-test.sh T1    # baseline — npm install sem protecção
-./run-test.sh T2    # Syft — geração de SBOM
+# Testes individuais
+./run-test.sh T1    # baseline — postinstall executa e exfiltra
+./run-test.sh T2    # Syft — gera SBOM CycloneDX
 ./run-test.sh T3a   # npm audit
-./run-test.sh T3b   # OSV Scanner
-./run-test.sh T3c   # Snyk (requer SNYK_TOKEN no .env)
-./run-test.sh T4    # Socket.dev (requer SOCKET_TOKEN + SOCKET_ORG no .env)
-./run-test.sh T5    # pnpm v10
-```
+./run-test.sh T3b   # OSV Scanner (lockfile + SBOM)
+./run-test.sh T3c   # Snyk (requer SNYK_TOKEN)
+./run-test.sh T4    # Socket.dev (requer SOCKET_TOKEN + SOCKET_ORG)
+./run-test.sh T5    # pnpm v10 — bloqueia postinstall
+./run-test.sh T6    # Dependency-Track — monitorização contínua
 
-### Executar a suite completa (T1–T5)
-
-```bash
-set -a; source .env; set +a   # carregar tokens antes de T3c e T4
+# Suite completa
+set -a; source .env; set +a
 ./run-test.sh all
 ```
 
 ---
 
-## Credenciais (`CODE/.env`)
+## O Protótipo
 
-Copiar `.env.example` para `.env` e preencher:
+### O que demonstra
 
-| Variável | Onde obter |
-|----------|-----------|
-| `SNYK_TOKEN` | [app.snyk.io](https://app.snyk.io) → Account Settings → Auth Token |
-| `SOCKET_TOKEN` | [socket.dev](https://socket.dev) → Settings → API Tokens |
-| `SOCKET_ORG` | slug da organização no URL do Socket.dev |
+Uma proposta de pipeline de segurança integrada para uma PME. A aplicação de demonstração é a **VoIP Manager API**: que consiste em um produto fictício composto por um backend Node.js que gere extensões, troncos SIP e registos de chamadas (CDR) de uma infraestrutura Asterisk.
+
+### A pipeline de segurança (GitHub Actions)
+
+A pipeline corre automaticamente em qualquer commit que altere `prototype/`. Implementa quatro camadas de defesa:
+
+```
+commit → GitHub Actions
+          │
+          ├─ pnpm install --ignore-scripts   [Camada 1: Prevenção]
+          │   Lifecycle scripts bloqueados — postinstall malicioso não executa
+          │
+          ├─ OSV Scanner (pnpm-lock.yaml)    [Camada 2: Detecção]
+          │   Detecta CVEs conhecidos — lodash@4.17.11 tem 7 CVEs
+          │
+          ├─ Syft → sbom.cdx.json            [Camada 3: Inventário]
+          │   Gera SBOM CycloneDX como artefacto do run
+          │
+          └─ CVEs encontrados?
+              Não → ✅ Pipeline verde
+              Sim → Issue de alerta criada/atualizada no GitHub
+                    🔴 Pipeline vermelha (build falha)
+```
+
+**Alerta sem configuração:** a issue é criada com `GITHUB_TOKEN` automático do GitHub Actions. A tabela na issue inclui: pacote, GHSA, CVE, CVSS, severidade, descrição e versão corrigida.
+
+### O ciclo detectar → corrigir → verificar
+
+O repositório demonstra o ciclo completo em duas branches:
+
+| Branch     | Estado da pipeline | O que mostra                                                                 |
+| ---------- | ------------------ | ---------------------------------------------------------------------------- |
+| `main`     | 🔴 Vermelha         | Dependências vulneráveis e issue de alerta aberta                            |
+| `fix-test` | 🟢 Verde            | lodash actualizado para `^4.18.0` e zero CVEs detectados no momento do teste |
+
+> Para reproduzir a correcção: criar uma branch, actualizar `lodash` em `prototype/app/package.json` para `^4.18.0`, regenerar o `pnpm-lock.yaml` e fazer push. A pipeline corre automaticamente e passa.
+
+### Como correr o protótipo localmente (opcional)
+
+```bash
+# 1. Correr a API
+cd prototype/app
+node src/index.js   # API disponível em http://localhost:3000
+
+# Endpoints principais:
+# POST /auth/register   → criar conta
+# POST /auth/login      → obter JWT
+# GET  /api/extensions  → listar extensões (requer JWT)
+# GET  /api/calls/stats → estatísticas CDR agregadas
+
+# 2. Monitorização contínua com Dependency-Track (requer Docker)
+cd prototype
+cp ../.env .env        # reutiliza DT_ADMIN_PASSWORD
+docker compose up -d
+# Aguardar ~60s → abrir http://localhost:8080
+# Carregar o SBOM gerado pela pipeline (artefacto sbom-voip-manager)
+```
 
 ---
 
-## Resultados (v2)
+## Estrutura do repositório
 
-| Teste | Ferramenta | Paradigma | lodash@4.17.11 | postinstall attack |
-|-------|-----------|-----------|:--------------:|:-----------------:|
-| T1 | Baseline (npm install) | — | instalado | **EXECUTOU** — 7 vars exfiltradas |
-| T2 | Syft | SBOM | inventariado | inventariado (sem alerta) |
-| T3a | npm audit | SCA reativo | **1 crítica** | não detectado (sem CVE) |
-| T3b | OSV Scanner | SCA reativo | **7 vulns** | não detectado (sem CVE) |
-| T3c | Snyk | SCA reativo | **9 vulns** | não detectado (sem CVE) |
-| T4 | Socket.dev | Comportamental | detectado (npm público) | não detectado (registry privado) |
-| T5 | pnpm v10 | Arquitectural | instalado | **BLOQUEOU** — "Ignored build scripts" |
+```
+CODE/
+├── .github/
+│   └── workflows/
+│       └── security-pipeline.yml ← pipeline CI/CD (OSV + Syft + Issue alert)
+├── .env.example                  ← template de credenciais
+├── docker-compose.yml            ← infra do lab + ferramentas de análise
+├── run-test.sh                   ← orquestrador dos testes T1–T6
+├── scripts/
+│   └── sbom-reader.js            ← leitura legível do SBOM CycloneDX
+├── lab/                          ← cenário de ataque
+│   ├── verdaccio/                ← registry npm local
+│   ├── supply-chain-demo/        ← pacote malicioso (@demo-lab/supply-chain-demo)
+│   ├── test-app/                 ← app Express alvo
+│   └── exfil-server/             ← servidor que regista exfiltrações
+├── evidence/                     ← output capturado dos testes T1–T6
+│   ├── T1-baseline/
+│   ├── T2-syft/
+│   ├── T3a-npm-audit/
+│   ├── T3b-osv-scanner/
+│   ├── T3b-osv-sbom/
+│   ├── T3c-snyk/
+│   ├── T4-socket/
+│   ├── T5-pnpm/
+│   └── T6-dependencytrack/
+└── prototype/                    ← pipeline PME recomendada
+    ├── app/                      ← VoIP Manager API (Express + SQLite + JWT)
+    └── docker-compose.yml        ← Dependency-Track
+```
 
-Evidências completas em `evidence/`. Resumo detalhado em `evidence/lab-results.txt`.
+---
+
+## Credenciais (`.env`)
+
+Necessárias apenas para correr o lab localmente. Copiar `.env.example` para `.env` e preencher:
+
+| Variável            | Onde obter                                                         |
+| ------------------- | ------------------------------------------------------------------ |
+| `SNYK_TOKEN`        | [app.snyk.io](https://app.snyk.io) → Account Settings → Auth Token |
+| `SOCKET_TOKEN`      | [socket.dev](https://socket.dev) → Settings → API Tokens           |
+| `SOCKET_ORG`        | slug da organização no URL do Socket.dev                           |
+| `DT_ADMIN_PASSWORD` | password à escolha para o Dependency-Track local                   |
