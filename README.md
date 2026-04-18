@@ -115,7 +115,7 @@ Uma proposta de pipeline de segurança integrada para uma PME. A aplicação de 
 
 ### A pipeline de segurança (GitHub Actions)
 
-A pipeline corre automaticamente em qualquer commit que altere `prototype/`. Implementa quatro camadas de defesa:
+A pipeline corre automaticamente em qualquer commit que altere `prototype/`. Implementa três camadas automatizadas de defesa:
 
 ```
 commit → GitHub Actions
@@ -136,6 +136,8 @@ commit → GitHub Actions
 ```
 
 **Alerta sem configuração:** a issue é criada com `GITHUB_TOKEN` automático do GitHub Actions. A tabela na issue inclui: pacote, GHSA, CVE, CVSS, severidade, descrição e versão corrigida.
+
+> **Nota — Dependency-Track:** o DT **não faz parte da pipeline automatizada**. É usado no lab como T6 (avaliação da ferramenta de monitorização contínua) e está disponível como complemento opcional do protótipo (ver abaixo). A separação é intencional: o DT requer uma instância persistente acessível a partir do GitHub Actions, o que foge ao âmbito deste protótipo académico.
 
 ### O ciclo detectar → corrigir → verificar
 
@@ -160,14 +162,26 @@ node src/index.js   # API disponível em http://localhost:3000
 # POST /auth/login      → obter JWT
 # GET  /api/extensions  → listar extensões (requer JWT)
 # GET  /api/calls/stats → estatísticas CDR agregadas
+```
 
-# 2. Monitorização contínua com Dependency-Track (requer Docker)
+### Complemento opcional — Dependency-Track (monitorização contínua)
+
+O Dependency-Track não faz parte da pipeline CI/CD mas complementa-a como camada de monitorização contínua: recebe o SBOM gerado pela pipeline e alerta quando são publicadas novas CVEs para os componentes já instalados — sem necessitar de novo scan.
+
+```bash
+# Arrancar o Dependency-Track localmente (requer Docker)
 cd prototype
-cp ../.env .env        # reutiliza DT_ADMIN_PASSWORD
+echo "DT_ADMIN_PASSWORD=password_à_escolha" > .env
 docker compose up -d
 # Aguardar ~60s → abrir http://localhost:8080
-# Carregar o SBOM gerado pela pipeline (artefacto sbom-voip-manager)
+
+# Após a pipeline correr no GitHub Actions:
+# 1. Descarregar o artefacto "sbom-voip-manager" do run
+# 2. No DT: Projects → voip-manager-api → Components → Upload BOM
+# 3. Aguardar ~30s → ver findings em Vulnerabilities (7 CVEs do lodash)
 ```
+
+> Esta é a mesma ferramenta avaliada no lab como **T6**. Os resultados do T6 (2 CRITICAL, 2 HIGH, 3 MEDIUM em lodash@4.17.11) estão em `evidence/T6-dependencytrack/`.
 
 ---
 
@@ -200,7 +214,7 @@ CODE/
 │   └── T6-dependencytrack/
 └── prototype/                    ← pipeline PME recomendada
     ├── app/                      ← VoIP Manager API (Express + SQLite + JWT)
-    └── docker-compose.yml        ← Dependency-Track
+    └── docker-compose.yml        ← Dependency-Track (complemento opcional — monitorização contínua)
 ```
 
 ---
