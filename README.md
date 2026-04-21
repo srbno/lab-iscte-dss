@@ -111,7 +111,21 @@ set -a; source .env; set +a
 
 ### O que demonstra
 
-Uma proposta de pipeline de segurança integrada para uma PME. A aplicação de demonstração é a **VoIP Manager API**: que consiste em um produto fictício composto por um backend Node.js que gere extensões, troncos SIP e registos de chamadas (CDR) de uma infraestrutura Asterisk.
+Uma proposta de pipeline de segurança integrada para uma PME. A aplicação de demonstração é a **VoIP Manager API**: um backend Node.js que gere extensões, troncos SIP e registos de chamadas (CDR) de uma infraestrutura Asterisk.
+
+### Ferramentas seleccionadas para o protótipo
+
+Das seis ferramentas avaliadas no lab (T1–T6), quatro foram integradas no protótipo. A tabela abaixo justifica cada decisão.
+
+| Ferramenta | Paradigma | No protótipo | Justificação |
+| --- | --- | :---: | --- |
+| pnpm v10 | Prevenção arquitectural | ✅ Camada 1 | Único controlo que bloqueou o ataque zero-day (T5). Recusa *lifecycle scripts* por omissão, sem depender de qualquer base de dados. Sem custo, sem conta. |
+| OSV Scanner | SCA reactivo | ✅ Camada 2 | Detecta CVEs conhecidos (7 para `lodash@4.17.11`, T3b). Gratuito, sem conta, base de dados OSV/Google. Usa apenas `GITHUB_TOKEN` automático — sem configuração de *secrets*. |
+| Syft | Inventário SBOM | ✅ Camada 3 | Gera SBOM CycloneDX (72 componentes, T2). Acção oficial `anchore/sbom-action`; output compatível com Dependency-Track. Gratuito, sem conta. |
+| Dependency-Track | Monitorização contínua | ✅ Opcional | Alerta sobre novos CVEs em dependências já instaladas, sem novo scan (T6). Requer instância persistente — não integrado no CI/CD; disponível como complemento local. |
+| npm audit | SCA reactivo | ❌ Substituído | Resultados equivalentes ao OSV Scanner (7 CVEs, T3a). O OSV Scanner tem base de dados mais abrangente, não depende do npm registry e produz JSON estruturado de melhor qualidade. |
+| Snyk | SCA reactivo | ❌ Não incluído | Modelo freemium com limites de uso e de funcionalidades na versão gratuita, o que compromete a adopção sustentada por uma PME. Detectou 9 *findings* vs. 7 do OSV Scanner, mas a diferença não justifica a dependência operacional de um serviço proprietário. |
+| Socket.dev | Comportamental | ❌ Não incluído | Cobertura limitada ao registry npm público — não analisou o pacote demo alojado no Verdaccio privado (T4). A capacidade comportamental, embora conceptualmente relevante, não é exercível sem publicação pública dos pacotes. |
 
 ### A pipeline de segurança (GitHub Actions)
 
