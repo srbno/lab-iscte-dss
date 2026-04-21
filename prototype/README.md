@@ -99,20 +99,13 @@ commit → GitHub Actions
           ├─ Syft → sbom.cdx.json             [Camada 3: Inventário]
           │   gera SBOM CycloneDX como artefacto do run
           │
-          └─ CVEs encontrados? → Email alert  [Alerta]
+          └─ CVEs encontrados?
+              Não → ✅ Pipeline verde
+              Sim → Issue de alerta criada/actualizada no GitHub  [Alerta]
+                    🔴 Pipeline vermelha (build falha)
 ```
 
-### Configurar os GitHub Secrets
-
-Em **Settings → Secrets and variables → Actions** do repositório:
-
-| Secret | Valor |
-|--------|-------|
-| `MAIL_USERNAME` | Endereço Gmail (ex: utilizador@gmail.com) |
-| `MAIL_PASSWORD` | Gmail App Password — não a password da conta Google |
-| `MAIL_TO` | Endereço de destino dos alertas |
-
-Para obter uma Gmail App Password: [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) (requer 2FA activo).
+**Sem configuração de secrets:** a issue é criada com o `GITHUB_TOKEN` automático do GitHub Actions. Não é necessário configurar nenhum secret adicional no repositório.
 
 ---
 
@@ -123,7 +116,7 @@ O Dependency-Track complementa a pipeline CI: monitoriza continuamente o SBOM ge
 ```bash
 # Arrancar o DT localmente
 cd prototype
-cp ../.env .env        # reutiliza DT_ADMIN_PASSWORD do lab
+cp .env.example .env   # preencher DT_ADMIN_PASSWORD
 docker compose up -d
 # Aguardar ~60s → abrir http://localhost:8080
 ```
