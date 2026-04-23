@@ -162,9 +162,11 @@ services:
       - ./lab/test-app:/app:ro
       - ./evidence/T3c-snyk:/evidence
     working_dir: /app
+    entrypoint: ["sh", "-lc"]
+    command:
+      - "snyk test --json > /evidence/snyk.json 2>&1 || true; snyk test > /evidence/snyk.txt 2>&1 || true; echo 'snyk: done'"
     environment:
       SNYK_TOKEN: ${SNYK_TOKEN:-}
-      COMMAND: "snyk test --json > /evidence/snyk.json 2>&1 || true; snyk test > /evidence/snyk.txt 2>&1 || true; echo 'snyk: done'"
     profiles:
       - analysis
 

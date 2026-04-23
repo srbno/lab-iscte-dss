@@ -59,11 +59,24 @@ setup() {
   banner
   preflight
   header "SETUP — A publicar pacote demo no Verdaccio"
+  local publish_output
   docker compose up -d verdaccio exfil-server
   sleep 3
-  docker compose --profile setup run --rm publisher 2>&1 || true
+
+  if publish_output=$(docker compose --profile setup run --rm publisher 2>&1); then
+    printf '%s\n' "$publish_output"
+    pass "Pacote @demo-lab/supply-chain-demo publicado no Verdaccio"
+  else
+    printf '%s\n' "$publish_output"
+    if printf '%s\n' "$publish_output" | grep -Eq 'E409|already present'; then
+      info "Pacote @demo-lab/supply-chain-demo já existia no Verdaccio — publish ignorado"
+    else
+      fail "Falha ao publicar pacote demo no Verdaccio"
+      return 1
+    fi
+  fi
+
   sleep 1
-  pass "Pacote @demo-lab/supply-chain-demo publicado no Verdaccio (ou já existia)"
   info "Lab pronto. Corra ./run-test.sh T1 para iniciar os testes."
 }
 
@@ -171,8 +184,6 @@ t3a() {
 
   sep
   if grep -q "lodash" "$EVIDENCE/T3a-npm-audit/npm-audit.txt" 2>/dev/null; then
-    local vulns
-    vulns=$(grep -oP '\d+ vulnerabilit' "$EVIDENCE/T3a-npm-audit/npm-audit.txt" | head -1 || echo "?")
     pass "RESULTADO: vulnerabilidades detectadas — lodash@4.17.11 flagged"
     info "Ver: evidence/T3a-npm-audit/npm-audit.txt"
   elif grep -q "found 0 vulnerabilities" "$EVIDENCE/T3a-npm-audit/npm-audit.txt" 2>/dev/null; then
@@ -248,12 +259,16 @@ t3c() {
 
   timer_start
   mkdir -p "$EVIDENCE/T3c-snyk"
+  rm -f "$EVIDENCE/T3c-snyk/snyk.json" "$EVIDENCE/T3c-snyk/snyk.txt"
   set -a; source "$SCRIPT_DIR/.env"; set +a
 
   docker compose --profile analysis run --rm snyk
 
   sep
-  if grep -q "lodash" "$EVIDENCE/T3c-snyk/snyk.txt" 2>/dev/null; then
+  if [ ! -f "$EVIDENCE/T3c-snyk/snyk.json" ] || [ ! -f "$EVIDENCE/T3c-snyk/snyk.txt" ]; then
+    fail "RESULTADO: Snyk não gerou os artefactos esperados — verificar o serviço no docker-compose"
+    return 1
+  elif grep -q "lodash" "$EVIDENCE/T3c-snyk/snyk.txt" 2>/dev/null; then
     pass "RESULTADO: vulnerabilidades detectadas — lodash@4.17.11 flagged"
   elif grep -q "No vulnerable paths found" "$EVIDENCE/T3c-snyk/snyk.txt" 2>/dev/null; then
     fail "RESULTADO: 0 vulnerabilidades — verificar lockfile e token"
