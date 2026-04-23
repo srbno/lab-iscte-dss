@@ -16,6 +16,8 @@ Este repositório tem **três componentes distintos**, que em conjunto demonstra
 | **Protótipo** | `prototype/`         | Pipeline de segurança integrada recomendada para uma PME (VoIP Manager API)      |
 | **CI/CD**     | `.github/workflows/` | Pipeline GitHub Actions real — detecta CVEs, cria Issue de alerta, falha o build |
 
+> Os slides da apresentação do trabalho podem ser acedidos pelo ficheiro [`Gestão Segura de Dependências de Software.pptx`](<Gestão Segura de Dependências de Software.pptx>).
+
 ### Como avaliar cada componente
 
 **1. Lab (resultados já disponíveis — não requer execução)**
@@ -117,15 +119,15 @@ Uma proposta de pipeline de segurança integrada para uma PME. A aplicação de 
 
 Das seis ferramentas avaliadas no lab (T1–T6), quatro foram integradas no protótipo. A tabela abaixo justifica cada decisão.
 
-| Ferramenta | Paradigma | No protótipo | Justificação |
-| --- | --- | :---: | --- |
-| pnpm v10 | Prevenção arquitectural | ✅ Camada 1 | Único controlo que bloqueou o ataque zero-day (T5). Recusa *lifecycle scripts* por omissão, sem depender de qualquer base de dados. Sem custo, sem conta. |
-| OSV Scanner | SCA reactivo | ✅ Camada 2 | Detecta CVEs conhecidos (7 para `lodash@4.17.11`, T3b). Gratuito, sem conta, base de dados OSV/Google. Usa apenas `GITHUB_TOKEN` automático — sem configuração de *secrets*. |
-| Syft | Inventário SBOM | ✅ Camada 3 | Gera SBOM CycloneDX (72 componentes, T2). Acção oficial `anchore/sbom-action`; output compatível com Dependency-Track. Gratuito, sem conta. |
-| Dependency-Track | Monitorização contínua | ✅ Opcional | Alerta sobre novos CVEs em dependências já instaladas, sem novo scan (T6). Requer instância persistente — não integrado no CI/CD; disponível como complemento local. |
-| npm audit | SCA reactivo | ❌ Substituído | Resultados equivalentes ao OSV Scanner (7 CVEs, T3a). O OSV Scanner tem base de dados mais abrangente, não depende do npm registry e produz JSON estruturado de melhor qualidade. |
-| Snyk | SCA reactivo | ❌ Não incluído | Modelo freemium com limites de uso e de funcionalidades na versão gratuita, o que compromete a adopção sustentada por uma PME. Detectou 9 *findings* vs. 7 do OSV Scanner, mas a diferença não justifica a dependência operacional de um serviço proprietário. |
-| Socket.dev | Comportamental | ❌ Não incluído | Cobertura limitada ao registry npm público — não analisou o pacote demo alojado no Verdaccio privado (T4). A capacidade comportamental, embora conceptualmente relevante, não é exercível sem publicação pública dos pacotes. |
+| Ferramenta       | Paradigma               |  No protótipo  | Justificação                                                                                                                                                                                                                                                   |
+| ---------------- | ----------------------- | :------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pnpm v10         | Prevenção arquitectural |   ✅ Camada 1   | Único controlo que bloqueou o ataque zero-day (T5). Recusa *lifecycle scripts* por omissão, sem depender de qualquer base de dados. Sem custo, sem conta.                                                                                                      |
+| OSV Scanner      | SCA reactivo            |   ✅ Camada 2   | Detecta CVEs conhecidos (7 para `lodash@4.17.11`, T3b). Gratuito, sem conta, base de dados OSV/Google. Usa apenas `GITHUB_TOKEN` automático — sem configuração de *secrets*.                                                                                   |
+| Syft             | Inventário SBOM         |   ✅ Camada 3   | Gera SBOM CycloneDX (72 componentes, T2). Acção oficial `anchore/sbom-action`; output compatível com Dependency-Track. Gratuito, sem conta.                                                                                                                    |
+| Dependency-Track | Monitorização contínua  |   ✅ Opcional   | Alerta sobre novos CVEs em dependências já instaladas, sem novo scan (T6). Requer instância persistente — não integrado no CI/CD; disponível como complemento local.                                                                                           |
+| npm audit        | SCA reactivo            | ❌ Substituído  | Resultados equivalentes ao OSV Scanner (7 CVEs, T3a). O OSV Scanner tem base de dados mais abrangente, não depende do npm registry e produz JSON estruturado de melhor qualidade.                                                                              |
+| Snyk             | SCA reactivo            | ❌ Não incluído | Modelo freemium com limites de uso e de funcionalidades na versão gratuita, o que compromete a adopção sustentada por uma PME. Detectou 9 *findings* vs. 7 do OSV Scanner, mas a diferença não justifica a dependência operacional de um serviço proprietário. |
+| Socket.dev       | Comportamental          | ❌ Não incluído | Cobertura limitada ao registry npm público — não analisou o pacote demo alojado no Verdaccio privado (T4). A capacidade comportamental, embora conceptualmente relevante, não é exercível sem publicação pública dos pacotes.                                  |
 
 ### A pipeline de segurança (GitHub Actions)
 
@@ -164,7 +166,7 @@ O repositório demonstra o ciclo completo em duas branches:
 
 > Para reproduzir a correcção: criar uma branch, actualizar `lodash` em `prototype/app/package.json` para `^4.18.0`, regenerar o `pnpm-lock.yaml` e fazer push. A pipeline corre automaticamente e passa.
 
-### Como correr o protótipo localmente (opcional)
+### Como correr a API do protótipo localmente (opcional)
 
 ```bash
 # 1. Correr a API
@@ -178,7 +180,7 @@ node src/index.js   # API disponível em http://localhost:3000
 # GET  /api/calls/stats → estatísticas CDR agregadas
 ```
 
-### Complemento opcional — Dependency-Track (monitorização contínua)
+### Monitorização contínua — Dependency-Track 
 
 O Dependency-Track não faz parte da pipeline CI/CD mas complementa-a como camada de monitorização contínua: recebe o SBOM gerado pela pipeline e alerta quando são publicadas novas CVEs para os componentes já instalados — sem necessitar de novo scan.
 
@@ -207,6 +209,7 @@ CODE/
 │   └── workflows/
 │       └── security-pipeline.yml ← pipeline CI/CD (OSV + Syft + Issue alert)
 ├── .env.example                  ← template de credenciais
+├── Gestão Segura de Dependências de Software.pptx ← slides de apresentação do projeto
 ├── docker-compose.yml            ← infra do lab + ferramentas de análise
 ├── run-test.sh                   ← orquestrador dos testes T1–T6
 ├── scripts/
