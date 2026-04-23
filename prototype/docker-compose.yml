@@ -6,7 +6,9 @@ name: voip-manager-prototype
 # Uso:
 #   docker compose up -d
 #   Aguardar ~60s (JVM + sync inicial de CVEs)
-#   Abrir http://localhost:8080  (admin / ver DT_ADMIN_PASSWORD no .env)
+#   Abrir http://localhost:8080
+#   Primeiro acesso: admin / admin
+#   Depois trocar a password inicial ou criar outro utilizador administrativo.
 #
 # Após a pipeline GitHub Actions correr, fazer upload do artefacto sbom.cdx.json
 # em Projects → voip-manager-api → Components (ou via API — ver prototype/README.md).
@@ -19,7 +21,6 @@ services:
     volumes:
       - dependencytrack-data:/data
     environment:
-      ALPINE_ADMIN_PASSWORD: ${DT_ADMIN_PASSWORD}
       JAVA_TOOL_OPTIONS: "-Xmx4G"
     mem_limit: 5g
     cpus: "2.0"

@@ -89,10 +89,16 @@ Evidências completas em `evidence/` — um directório por teste com o output o
 # Pré-requisito: copiar credenciais
 cp .env.example .env   # preencher SNYK_TOKEN, SOCKET_TOKEN, SOCKET_ORG, DT_ADMIN_PASSWORD
 
+# Carregar credenciais para a sessão actual
+set -a; source .env; set +a
+
 # Arrancar infra e publicar pacote demo
 ./run-test.sh setup
 
-# Testes individuais
+# Suite completa
+./run-test.sh all
+
+# Caso deseje correr testes individualmente
 ./run-test.sh T1    # baseline — postinstall executa e exfiltra
 ./run-test.sh T2    # Syft — gera SBOM CycloneDX
 ./run-test.sh T3a   # npm audit
@@ -102,9 +108,13 @@ cp .env.example .env   # preencher SNYK_TOKEN, SOCKET_TOKEN, SOCKET_ORG, DT_ADMI
 ./run-test.sh T5    # pnpm v10 — bloqueia postinstall
 ./run-test.sh T6    # Dependency-Track — monitorização contínua
 
-# Suite completa
-set -a; source .env; set +a
-./run-test.sh all
+# Simular primeira execução do lab a partir de ambiente Docker limpo
+./run-test.sh reset
+docker network rm lab-projeto-dss_default 2>/dev/null || true
+
+# O reset remove containers, redes e volumes Docker do lab.
+# Isto apaga o estado persistente do Verdaccio e do Dependency-Track,
+# mas não apaga os ficheiros em evidence/.
 ```
 
 ---
@@ -166,20 +176,6 @@ O repositório demonstra o ciclo completo em duas branches:
 
 > Para reproduzir a correcção: criar uma branch, actualizar `lodash` em `prototype/app/package.json` para `^4.18.0`, regenerar o `pnpm-lock.yaml` e fazer push. A pipeline corre automaticamente e passa.
 
-### Como correr a API do protótipo localmente (opcional)
-
-```bash
-# 1. Correr a API
-cd prototype/app
-node src/index.js   # API disponível em http://localhost:3000
-
-# Endpoints principais:
-# POST /auth/register   → criar conta
-# POST /auth/login      → obter JWT
-# GET  /api/extensions  → listar extensões (requer JWT)
-# GET  /api/calls/stats → estatísticas CDR agregadas
-```
-
 ### Monitorização contínua — Dependency-Track 
 
 O Dependency-Track não faz parte da pipeline CI/CD mas complementa-a como camada de monitorização contínua: recebe o SBOM gerado pela pipeline e alerta quando são publicadas novas CVEs para os componentes já instalados — sem necessitar de novo scan.
@@ -187,9 +183,14 @@ O Dependency-Track não faz parte da pipeline CI/CD mas complementa-a como camad
 ```bash
 # Arrancar o Dependency-Track localmente (requer Docker)
 cd prototype
-echo "DT_ADMIN_PASSWORD=password_à_escolha" > .env
 docker compose up -d
 # Aguardar ~60s → abrir http://localhost:8080
+
+# Primeiro acesso à UI:
+# username: admin
+# password: admin
+# O Dependency-Track obriga a trocar a password inicial.
+# Depois pode também criar outro utilizador administrativo.
 
 # Após a pipeline correr no GitHub Actions:
 # 1. Descarregar o artefacto "sbom-voip-manager" do run

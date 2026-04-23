@@ -76,10 +76,13 @@ Filtro opcional: `GET /api/extensions?status=active`
 
 ```bash
 cd prototype/app
-node src/index.js   # porta 3000
+corepack enable
+pnpm install
+pnpm run start   # API disponível em http://localhost:3000
 ```
 
 > A base de dados SQLite é criada em `prototype/app/data/voip.db` na primeira execução.
+> Se surgir erro de bindings do `better-sqlite3`, usar Node.js LTS (20/22) e reconstruir a dependência nativa com `pnpm rebuild better-sqlite3`. O CI usa `pnpm install --ignore-scripts` de propósito para demonstrar bloqueio de lifecycle scripts; para correr a API localmente, o módulo SQLite nativo precisa de build.
 
 ---
 
@@ -116,9 +119,14 @@ O Dependency-Track complementa a pipeline CI: monitoriza continuamente o SBOM ge
 ```bash
 # Arrancar o DT localmente
 cd prototype
-cp .env.example .env   # preencher DT_ADMIN_PASSWORD
 docker compose up -d
 # Aguardar ~60s → abrir http://localhost:8080
+
+# Primeiro acesso à UI:
+# username: admin
+# password: admin
+# O Dependency-Track obriga a trocar a password inicial.
+# Depois pode também criar outro utilizador administrativo.
 ```
 
 Após a pipeline GitHub Actions correr:
